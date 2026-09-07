@@ -29,6 +29,57 @@ def install_solution():
     _SOLUTION_FN = fn
 
 
+def install_pyflakes():
+    """Extracts the vendored pyflakes wheel into site-packages."""
+    import os
+    import sys
+    import zipfile
+
+    wheel_path = globals()['__WHEEL_PATH']
+    target = next(path for path in sys.path if 'site-packages' in path)
+    with zipfile.ZipFile(wheel_path) as archive:
+        archive.extractall(target)
+    os.remove(wheel_path)
+
+
+def lint_one():
+    """Runs pyflakes over __LINT_CODE and returns JSON diagnostics."""
+    import io
+    import json
+
+    code = globals()['__LINT_CODE']
+    try:
+        import pyflakes.api
+        import pyflakes.reporter
+    except ImportError:
+        return json.dumps([])
+
+    out = io.StringIO()
+    err = io.StringIO()
+    reporter = pyflakes.reporter.Reporter(out, err)
+    pyflakes.api.check(code, 'solution.py', reporter)
+
+    diagnostics = []
+    for stream, severity in ((out, 'warning'), (err, 'error')):
+        for line in stream.getvalue().splitlines():
+            parts = line.split(':', 3)
+            if len(parts) == 4 and parts[1].isdigit() and parts[2].isdigit():
+                diagnostics.append({
+                    'line': int(parts[1]),
+                    'column': int(parts[2]),
+                    'message': parts[3].strip(),
+                    'severity': severity,
+                })
+            elif severity == 'warning' and line.strip():
+                diagnostics.append({
+                    'line': 1,
+                    'column': 1,
+                    'message': line.strip(),
+                    'severity': severity,
+                })
+    return json.dumps(diagnostics)
+
+
 def run_one():
     args = json.loads(globals()['__ARGS_JSON'])
     start = time.perf_counter()

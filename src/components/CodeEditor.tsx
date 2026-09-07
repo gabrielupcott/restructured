@@ -5,6 +5,7 @@
 import { useEffect, useRef } from 'react'
 import * as monaco from 'monaco-editor'
 import EditorWorker from 'monaco-editor/editor/editor.worker.js?worker'
+import type { LintDiagnostic } from '../execution/protocol'
 import { loadPalette, mixHex, onPaletteChange, type Palette } from '../theme/palettes'
 
 const monacoWindow = self as unknown as {
@@ -63,9 +64,10 @@ onPaletteChange(applyEditorTheme)
 interface CodeEditorProps {
   value: string
   onChange: (value: string) => void
+  diagnostics: LintDiagnostic[]
 }
 
-export default function CodeEditor({ value, onChange }: CodeEditorProps) {
+export default function CodeEditor({ value, onChange, diagnostics }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const onChangeRef = useRef(onChange)
@@ -114,6 +116,27 @@ export default function CodeEditor({ value, onChange }: CodeEditorProps) {
       editor.setValue(value)
     }
   }, [value])
+
+  useEffect(() => {
+    const model = editorRef.current?.getModel()
+    if (!model) return
+    monaco.editor.setModelMarkers(
+      model,
+      'pyflakes',
+      diagnostics.map((diagnostic) => ({
+        startLineNumber: diagnostic.line,
+        endLineNumber: diagnostic.line,
+        startColumn: Math.max(1, diagnostic.column),
+        endColumn: Math.max(1, diagnostic.column) + 1,
+        message: diagnostic.message,
+        severity:
+          diagnostic.severity === 'error'
+            ? monaco.MarkerSeverity.Error
+            : monaco.MarkerSeverity.Warning,
+        source: 'pyflakes',
+      })),
+    )
+  }, [diagnostics])
 
   return <div ref={hostRef} className="h-full w-full" />
 }

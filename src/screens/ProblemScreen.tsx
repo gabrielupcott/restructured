@@ -1,7 +1,12 @@
-import { useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import CodeEditor from '../components/CodeEditor'
 import type { Problem, TestCase } from '../content/types'
-import { Runner, type RunHandlers, type TestOutcome } from '../execution/runner'
+import type { LintDiagnostic } from '../execution/protocol'
+import {
+  getSharedRunner,
+  type RunHandlers,
+  type TestOutcome,
+} from '../execution/runner'
 import { formatClock, formatMs } from '../lib/format'
 import PalettePicker from '../components/PalettePicker'
 import { smallestFailingIndex } from '../results/reveal'
@@ -109,12 +114,28 @@ export default function ProblemScreen({
   const [hiddenOutcomes, setHiddenOutcomes] = useState<(TestOutcome | null)[]>([])
   const [compileError, setCompileError] = useState<string | null>(null)
   const [sandboxResets, setSandboxResets] = useState(0)
-  const runnerRef = useRef<Runner | null>(null)
+  const [stopped, setStopped] = useState(false)
+  const [lintDiagnostics, setLintDiagnostics] = useState<LintDiagnostic[]>([])
 
-  function getRunner(): Runner {
-    if (!runnerRef.current) runnerRef.current = new Runner()
-    return runnerRef.current
-  }
+  // Boot the shared runtime as soon as the screen opens so lint and runs are
+  // ready by the time the player finishes reading.
+  useEffect(() => {
+    getSharedRunner()
+  }, [])
+
+  // Debounced pyflakes pass; needs the shared runtime booted and idle.
+  useEffect(() => {
+    if (running) return
+    const timer = setTimeout(() => {
+      getSharedRunner()
+        .lint(code)
+        .then(setLintDiagnostics)
+        .catch(() => {
+          // worker busy or restarting; the next edit retries
+        })
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [code, running])
 
   async function execute(nextScope: Scope) {
     if (running) return
@@ -127,6 +148,8 @@ export default function ProblemScreen({
     setRunning(true)
     setScope(nextScope)
     setCompileError(null)
+    setStopped(false)
+    setLintDiagnostics([])
     setVisibleOutcomes(problem.tests.visible.map(() => null))
     setHiddenOutcomes(nextScope === 'all' ? problem.tests.hidden.map(() => null) : [])
 
@@ -143,8 +166,9 @@ export default function ProblemScreen({
       },
     }
     try {
-      const resets = await getRunner().runTests({ code, functionName: problem.functionName, tests }, handlers)
-      if (resets > 0) setSandboxResets((prev) => prev + resets)
+      const result = await getSharedRunner().runTests({ code, functionName: problem.functionName, tests }, handlers)
+      if (result.sandboxResets > 0) setSandboxResets((prev) => prev + result.sandboxResets)
+      if (result.stopped) setStopped(true)
     } finally {
       setRunning(false)
       setStatus(null)
@@ -166,6 +190,7 @@ export default function ProblemScreen({
   let summary = 'IDLE'
   if (running && status) summary = status.toUpperCase()
   else if (compileError) summary = 'INSTALL FAILED'
+  else if (stopped) summary = 'STOPPED'
   else if (scope === 'all') {
     summary = allPassed
       ? `ALL TESTS PASSED (${visiblePassed + hiddenPassed}/${visibleOutcomes.length + hiddenOutcomes.length})`
@@ -231,7 +256,7 @@ export default function ProblemScreen({
             </button>
           </div>
           <div className="min-h-0 flex-1">
-            <CodeEditor value={code} onChange={setCode} />
+            <CodeEditor value={code} onChange={setCode} diagnostics={lintDiagnostics} />
           </div>
         </section>
       </div>
@@ -309,6 +334,13 @@ export default function ProblemScreen({
             className="border-2 border-dos-cyan px-5 py-1 text-sm text-dos-cyan hover:bg-dos-cyan hover:text-dos-bg disabled:cursor-not-allowed disabled:opacity-40"
           >
             SUBMIT
+          </button>
+          <button
+            onClick={() => getSharedRunner().stop()}
+            disabled={!running}
+            className="border-2 border-dos-yellow px-5 py-1 text-sm text-dos-yellow hover:bg-dos-yellow hover:text-dos-bg disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            STOP
           </button>
         </div>
       </footer>

@@ -1,0 +1,61 @@
+{
+  "id": "valid-anagram",
+  "title": "Valid Anagram",
+  "track": "Strings",
+  "difficulty": "easy",
+  "topics": ["strings", "hash-maps"],
+  "source": "canonical Valid Anagram concept; description, examples, and tests re-authored",
+  "description": "Return True if the strings s and t are anagrams of each other, meaning they contain exactly the same characters with the same counts, and False otherwise. Comparison is case sensitive: a and A count as different characters.",
+  "constraints": [
+    "0 <= len(s), len(t) <= 20000",
+    "s and t consist of printable characters"
+  ],
+  "parameters": ["s", "t"],
+  "functionName": "is_anagram",
+  "starterCode": "def is_anagram(s, t):\n    # Return True if s and t contain the same characters with the same counts.\n    ...\n",
+  "examples": [
+    {
+      "input": { "s": "listen", "t": "silent" },
+      "output": true,
+      "explanation": "both strings contain the same six letters"
+    },
+    {
+      "input": { "s": "rat", "t": "car" },
+      "output": false,
+      "explanation": "s contains a t but t does not, so the counts differ"
+    }
+  ],
+  "hints": [
+    "Two strings are anagrams exactly when every character appears the same number of times in both.",
+    "A dictionary keyed by character can count occurrences in one pass.",
+    "Count the characters of s, then decrement while walking t; if a count would drop below zero, or the lengths differ, answer False."
+  ],
+  "solution": "Compare lengths first, since different lengths can never be anagrams. Count each character of s in a dictionary, then walk t decrementing counts; any character missing or exhausted returns False, and surviving the walk returns True. One pass over each string: O(n) time, O(k) space for k distinct characters.",
+  "solutionCode": "def is_anagram(s, t):\n    if len(s) != len(t):\n        return False\n    counts = {}\n    for ch in s:\n        counts[ch] = counts.get(ch, 0) + 1\n    for ch in t:\n        if counts.get(ch, 0) == 0:\n            return False\n        counts[ch] -= 1\n    return True\n",
+  "bruteForceCode": "def is_anagram(s, t):\n    remaining = list(t)\n    for ch in s:\n        found = False\n        for i in range(len(remaining)):\n            if remaining[i] == ch:\n                remaining.pop(i)\n                found = True\n                break\n        if not found:\n            return False\n    return len(remaining) == 0\n",
+  "failureHint": "hidden tests include empty strings, repeated characters, and one very long anagram pair",
+  "parTimeSec": 300,
+  "expectedComplexity": { "time": "O(n)", "space": "O(n)" },
+  "tests": {
+    "visible": [
+      {
+        "args": ["listen", "silent"],
+        "failNote": "compare character counts, not just the sets of characters"
+      },
+      {
+        "args": ["rat", "car"],
+        "failNote": "repeated characters must match too"
+      }
+    ],
+    "hidden": [
+      { "args": ["", ""] },
+      { "args": ["a", ""] },
+      { "args": ["ab", "a"] },
+      { "args": ["aab", "abb"] },
+      { "args": ["a", "a"] },
+      { "args": ["anagram", "nagaram"] },
+      { "args": ["aacc", "ccac"] },
+      { "args": ["aiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhpxfaiqygowemucksnvdltbjrzhp", "phzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqiafxphzrjbtldvnskcumewogyqia"] }
+    ]
+  }
+}

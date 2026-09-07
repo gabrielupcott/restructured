@@ -9,6 +9,7 @@ import type { WorkerInbound, WorkerOutbound } from './protocol'
 interface PyodideLike {
   runPythonAsync(source: string): Promise<unknown>
   globals: { set(name: string, value: unknown): void }
+  FS: { writeFile(path: string, data: Uint8Array): void }
 }
 
 let pyodide: PyodideLike | null = null
@@ -23,6 +24,20 @@ async function initPyodide(base: string): Promise<void> {
   }
   pyodide = await module.loadPyodide({ indexURL: base })
   await pyodide.runPythonAsync(harnessSource)
+  await installPyflakes(base)
+}
+
+/** Extracts the vendored wheel into site-packages so pyflakes imports work. */
+async function installPyflakes(base: string): Promise<void> {
+  try {
+    const wheel = await fetch(`${base}wheels/pyflakes.whl`)
+    if (!wheel.ok) throw new Error(`wheel fetch failed with status ${wheel.status}`)
+    pyodide!.FS.writeFile('/pyflakes.whl', new Uint8Array(await wheel.arrayBuffer()))
+    pyodide!.globals.set('__WHEEL_PATH', '/pyflakes.whl')
+    await pyodide!.runPythonAsync('install_pyflakes()')
+  } catch (error) {
+    console.warn('pyflakes unavailable; editor linting disabled:', error)
+  }
 }
 
 self.onmessage = async (event: MessageEvent<WorkerInbound>) => {
@@ -44,6 +59,10 @@ self.onmessage = async (event: MessageEvent<WorkerInbound>) => {
       pyodide!.globals.set('__ARGS_JSON', JSON.stringify(message.args))
       const raw = await pyodide!.runPythonAsync('run_one()')
       post({ type: 'result', payload: JSON.parse(String(raw)) })
+    } else if (message.type === 'lint') {
+      pyodide!.globals.set('__LINT_CODE', message.code)
+      const raw = await pyodide!.runPythonAsync('lint_one()')
+      post({ type: 'lint-result', diagnostics: JSON.parse(String(raw)) })
     }
   } catch (error) {
     post({ type: 'fatal', error: String(error) })
