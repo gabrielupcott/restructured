@@ -8,7 +8,7 @@ The full product scope lives in [leetcode-game-scope.md](./leetcode-game-scope.m
 
 ## Status
 
-Alpha 1. Coding prototype working: pick a problem, write Python in the DOS-themed editor, run visible tests, submit to run all tests including hidden ones, with sandbox-reset handling for hung code and tiered hidden-test feedback.
+Alpha 1 is complete: eight verified problems across four tracks, the DOS-themed Monaco editor with pyflakes linting, run and submit with a stop control, per-test wall-clock timeouts with sandbox-reset recovery, tiered hidden-test feedback, and the palette system with presets plus custom colors. Next up: the game mechanics (timer, XP, Big-O quiz, progression, records).
 
 ## Tech stack
 
@@ -42,14 +42,16 @@ npm run content:build # verify problem drafts, compute outputs + anchors, write 
 
 ```
 content/problems/    Problem drafts, one JSON per problem (inputs only, no expected outputs)
-public/pyodide/      Pyodide runtime, generated at predev/prebuild, gitignored
+public/fonts/        Vendored VT323 font and its license
+public/pyodide/      Pyodide runtime and pyflakes wheel, generated at predev/prebuild, gitignored
 scripts/             Content pipeline + runtime copy scripts
-src/components/      CodeEditor (Monaco, DOS theme)
+src/components/      CodeEditor (Monaco, DOS theme) and PalettePicker
 src/content/         Schema types, content loader, generated/ (committed bundles)
 src/execution/      Python test harness, Pyodide worker, main-thread runner
 src/lib/             Small shared helpers
 src/results/         Hidden-test reveal logic
 src/screens/         ProblemScreen
+src/theme/           Palette presets, application, and persistence
 ```
 
 The app loads problem bundles from `src/content/generated/`, which is committed, so the app build never runs Python. Run `npm run content:build` only after changing drafts.

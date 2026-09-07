@@ -25,4 +25,4 @@ The pipeline runs the same Python harness (`src/execution/harness.py`) the brows
 
 ## copy-pyodide.mjs
 
-Copies `pyodide.mjs`, `pyodide.asm.mjs`, `pyodide.asm.wasm`, `python_stdlib.zip`, and `pyodide-lock.json` from `node_modules/pyodide` to `public/pyodide` so the worker loads Python same-origin with no CDN. Gitignored; regenerated on every dev/build.
+Copies `pyodide.mjs`, `pyodide.asm.mjs`, `pyodide.asm.wasm`, `python_stdlib.zip`, and `pyodide-lock.json` from `node_modules/pyodide` to `public/pyodide` so the worker loads Python same-origin with no CDN. Also vendors the pyflakes wheel from PyPI into `public/pyodide/wheels/` for editor linting; the download is cached and skipped when the wheel is already present, so offline builds keep working. Gitignored; regenerated on every dev/build.
