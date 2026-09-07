@@ -4,8 +4,6 @@ A minimalist, DOS-styled video game for practicing algorithm problems. Pick a pr
 
 Local-first: static site, all execution in the browser, progress saved locally. No backend, no accounts.
 
-The full product scope lives in [leetcode-game-scope.md](./leetcode-game-scope.md).
-
 ## Status
 
 Alpha 1 is complete: eight verified problems across four tracks, the DOS-themed Monaco editor with pyflakes linting, run and submit with a stop control, per-test wall-clock timeouts with sandbox-reset recovery, tiered hidden-test feedback, and the palette system with presets plus custom colors. Next up: the game mechanics (timer, XP, Big-O quiz, progression, records).
