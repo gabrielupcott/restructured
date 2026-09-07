@@ -5,6 +5,7 @@
 import { useEffect, useRef } from 'react'
 import * as monaco from 'monaco-editor'
 import EditorWorker from 'monaco-editor/editor/editor.worker.js?worker'
+import { loadPalette, mixHex, onPaletteChange, type Palette } from '../theme/palettes'
 
 const monacoWindow = self as unknown as {
   MonacoEnvironment?: monaco.Environment
@@ -13,36 +14,51 @@ monacoWindow.MonacoEnvironment = {
   getWorker: () => new EditorWorker(),
 }
 
-monaco.editor.defineTheme('dos', {
-  base: 'vs-dark',
-  inherit: true,
-  rules: [
-    { token: '', foreground: 'ffffff' },
-    { token: 'keyword', foreground: '9ce7ff' },
-    { token: 'string', foreground: 'ffe79c' },
-    { token: 'string.escape', foreground: 'ffc49c' },
-    { token: 'number', foreground: 'd7b3ff' },
-    { token: 'comment', foreground: 'b36b9c' },
-    { token: 'type', foreground: '9cffc4' },
-    { token: 'identifier', foreground: 'ffffff' },
-    { token: 'delimiter', foreground: 'ff9ce7' },
-  ],
-  colors: {
-    // Keep these in sync with the active palette in global.css
-    // (currently magenta: bg #6e004c, text #ff9ce7).
-    'editor.background': '#6e004c',
-    'editor.foreground': '#ffffff',
-    'editorLineNumber.foreground': '#b36b9c',
-    'editorLineNumber.activeForeground': '#ff9ce7',
-    'editor.selectionBackground': '#a62978',
-    'editor.inactiveSelectionBackground': '#86145f',
-    'editor.lineHighlightBackground': '#7e1060',
-    'editorCursor.foreground': '#ff9ce7',
-    'editorIndentGuide.background1': '#8a2368',
-    'editorWidget.background': '#6e004c',
-    'editorWidget.border': '#b36b9c',
-  },
-})
+/**
+ * Builds the DOS editor theme from the active palette pair. Derived shades
+ * (comments, line numbers, selection) mix the pair; fixed accent tints stay
+ * readable on any dark canvas.
+ */
+function dosTheme(palette: Palette): monaco.editor.IStandaloneThemeData {
+  const comment = mixHex(palette.text, palette.bg, 0.5).slice(1)
+  const faint = mixHex(palette.text, palette.bg, 0.3).slice(1)
+  return {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: '', foreground: 'ffffff' },
+      { token: 'keyword', foreground: '9ce7ff' },
+      { token: 'string', foreground: 'ffe79c' },
+      { token: 'string.escape', foreground: 'ffc49c' },
+      { token: 'number', foreground: 'd7b3ff' },
+      { token: 'comment', foreground: comment },
+      { token: 'type', foreground: '9cffc4' },
+      { token: 'identifier', foreground: 'ffffff' },
+      { token: 'delimiter', foreground: palette.text.slice(1) },
+    ],
+    colors: {
+      'editor.background': palette.bg,
+      'editor.foreground': '#ffffff',
+      'editorLineNumber.foreground': faint,
+      'editorLineNumber.activeForeground': palette.text,
+      'editor.selectionBackground': mixHex(palette.bg, palette.text, 0.2),
+      'editor.inactiveSelectionBackground': mixHex(palette.bg, palette.text, 0.12),
+      'editor.lineHighlightBackground': mixHex(palette.bg, palette.text, 0.08),
+      'editorCursor.foreground': palette.text,
+      'editorIndentGuide.background1': mixHex(palette.bg, palette.text, 0.15),
+      'editorWidget.background': palette.bg,
+      'editorWidget.border': comment,
+    },
+  }
+}
+
+function applyEditorTheme(palette: Palette) {
+  monaco.editor.defineTheme('dos', dosTheme(palette))
+  monaco.editor.setTheme('dos')
+}
+
+applyEditorTheme(loadPalette())
+onPaletteChange(applyEditorTheme)
 
 interface CodeEditorProps {
   value: string

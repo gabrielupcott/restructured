@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { PROBLEMS } from './content'
 import { formatClock } from './lib/format'
+import PalettePicker from './components/PalettePicker'
 
 const ProblemScreen = lazy(() => import('./screens/ProblemScreen'))
 
@@ -32,6 +33,9 @@ export default function App() {
         </Suspense>
       ) : (
         <>
+          <div className="fixed right-4 top-3 z-50">
+            <PalettePicker />
+          </div>
           <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center px-6 py-20">
           <h1 className="font-pixel text-5xl text-dos-white">RESTRUCTURED</h1>
           <p className="mt-3 text-xs text-dos-dim">ALPHA 1</p>

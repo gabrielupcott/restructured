@@ -3,6 +3,7 @@ import CodeEditor from '../components/CodeEditor'
 import type { Problem, TestCase } from '../content/types'
 import { Runner, type RunHandlers, type TestOutcome } from '../execution/runner'
 import { formatClock, formatMs } from '../lib/format'
+import PalettePicker from '../components/PalettePicker'
 import { smallestFailingIndex } from '../results/reveal'
 
 interface ProblemScreenProps {
@@ -189,6 +190,7 @@ export default function ProblemScreen({
         <span className="ml-auto text-xs text-dos-dim">
           PAR {formatClock(problem.parTimeSec)}
         </span>
+        <PalettePicker />
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 md:grid-rows-1">
