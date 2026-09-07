@@ -8,6 +8,12 @@ export default tseslint.config(
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.browser,
@@ -19,6 +25,12 @@ export default tseslint.config(
   },
   {
     files: ['vite.config.ts'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
+    files: ['scripts/**/*.ts'],
     languageOptions: {
       globals: globals.node,
     },

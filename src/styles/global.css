@@ -1,1 +1,55 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: "VT323";
+  src: url("/fonts/VT323-Regular.woff2") format("woff2");
+  font-display: swap;
+}
+
+/*
+ * Track palettes. Pattern: a dark, fully saturated hue for the canvas and a
+ * light tint of the same hue for text (~22% vs ~80% lightness, same hue),
+ * following #6e004c / #ff9ce7.
+ */
+@theme {
+  --font-dos: "IBM Plex Mono", Consolas, Menlo, "Courier New", monospace;
+  --font-pixel: "VT323", "IBM Plex Mono", Consolas, Menlo, monospace;
+
+  --color-palette-red-bg: #6e0000;
+  --color-palette-red-text: #ff9c9c;
+  --color-palette-orange-bg: #6e3c00;
+  --color-palette-orange-text: #ffce9c;
+  --color-palette-green-bg: #006e2c;
+  --color-palette-green-text: #9cffc4;
+  --color-palette-blue-bg: #004c6e;
+  --color-palette-blue-text: #9ce7ff;
+  --color-palette-magenta-bg: #6e004c;
+  --color-palette-magenta-text: #ff9ce7;
+
+  /* Active palette. Point these two references at another palette to reskin. */
+  --color-dos-bg: var(--color-palette-magenta-bg);
+  --color-dos-text: var(--color-palette-magenta-text);
+
+  /* Mid tints of the active pair, derived so they follow palette swaps. */
+  --color-dos-dim: color-mix(in srgb, var(--color-dos-text) 75%, var(--color-dos-bg));
+  --color-dos-faint: color-mix(in srgb, var(--color-dos-text) 50%, var(--color-dos-bg));
+
+  /* Bright DOS accents, shared across palettes. */
+  --color-dos-white: #ffffff;
+  --color-dos-green: #55ff55;
+  --color-dos-red: #ff5555;
+  --color-dos-yellow: #ffff55;
+  --color-dos-cyan: #55ffff;
+  --color-dos-magenta: #ff55ff;
+}
+
+body {
+  background: var(--color-dos-bg);
+  color: var(--color-dos-text);
+  font-family: var(--font-dos);
+}
+
+::selection {
+  background: var(--color-dos-text);
+  color: var(--color-dos-bg);
+}

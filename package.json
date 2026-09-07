@@ -7,12 +7,15 @@
     "node": ">=20.19.0"
   },
   "scripts": {
+    "predev": "node scripts/copy-pyodide.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/copy-pyodide.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "content:build": "node scripts/build-content.ts"
   },
   "dependencies": {
     "monaco-editor": "^0.56.0",

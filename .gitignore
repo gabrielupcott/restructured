@@ -10,6 +10,9 @@ coverage/
 *.local
 *.tsbuildinfo
 
+# Generated at predev/prebuild from node_modules
+public/pyodide/
+
 # Environment
 .env
 .env.*

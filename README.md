@@ -4,11 +4,11 @@ A minimalist, DOS-styled video game for practicing algorithm problems. Pick a pr
 
 Local-first: static site, all execution in the browser, progress saved locally. No backend, no accounts.
 
-The full product scope and the 14 binding decisions live in [leetcode-game-scope.md](./leetcode-game-scope.md).
+The full product scope lives in [leetcode-game-scope.md](./leetcode-game-scope.md).
 
 ## Status
 
-Pre-MVP. Current phase: Phase 1, the coding prototype (problem, editor, run, tests, pass/fail).
+Alpha 1. Coding prototype working: pick a problem, write Python in the DOS-themed editor, run visible tests, submit to run all tests including hidden ones, with sandbox-reset handling for hung code and tiered hidden-test feedback.
 
 ## Tech stack
 
@@ -16,10 +16,10 @@ Pre-MVP. Current phase: Phase 1, the coding prototype (problem, editor, run, tes
 | --- | --- |
 | UI | React 19, TypeScript |
 | Build | Vite |
-| Styling | Tailwind CSS 4 (DOS 16-color theme is Phase 1 work, Decision 10) |
-| Code editor | Monaco, DOS themed, no autocomplete (Decision 10) |
-| Execution | Python via Pyodide in a Web Worker (Decision 2, Decision 13) |
-| Persistence | IndexedDB / localStorage, local only (Decision 1) |
+| Styling | Tailwind CSS 4 (DOS 16-color theme) |
+| Code editor | Monaco, DOS themed, no autocomplete |
+| Execution | Python via Pyodide in a Web Worker |
+| Persistence | IndexedDB / localStorage, local only |
 | Tests | Vitest |
 | Hosting | Static: GitHub Pages |
 
@@ -29,25 +29,31 @@ Requires Node 20.19+ or 22.12+ (Vite 7 requirement). Development uses Node 22 LT
 
 ```
 npm install
-npm run dev        # dev server
-npm run build      # typecheck + production build
-npm run preview    # serve the production build
-npm run test       # vitest
-npm run lint       # eslint
-npm run typecheck  # tsc
+npm run dev           # dev server (copies the Pyodide runtime to public/pyodide first)
+npm run build         # copy runtime + typecheck + production build
+npm run preview       # serve the production build
+npm run test          # vitest
+npm run lint          # eslint
+npm run typecheck     # tsc
+npm run content:build # verify problem drafts, compute outputs + anchors, write generated bundles
 ```
 
 ## Project structure
 
 ```
-content/problems/   Problem drafts, one file per problem (schema in the scope doc)
-public/             Static assets served as-is
-scripts/            Content pipeline: computes expected outputs, runtime anchors, validation
-src/                Application source: screens, components, the Pyodide execution
-                    worker, local progress storage, generated content bundles
+content/problems/    Problem drafts, one JSON per problem (inputs only, no expected outputs)
+public/pyodide/      Pyodide runtime, generated at predev/prebuild, gitignored
+scripts/             Content pipeline + runtime copy scripts
+src/components/      CodeEditor (Monaco, DOS theme)
+src/content/         Schema types, content loader, generated/ (committed bundles)
+src/execution/      Python test harness, Pyodide worker, main-thread runner
+src/lib/             Small shared helpers
+src/results/         Hidden-test reveal logic
+src/screens/         ProblemScreen
 ```
 
-Verified problem bundles land in `src/content/generated/` and are committed (Decision 17), so the app build never runs Python.
+The app loads problem bundles from `src/content/generated/`, which is committed, so the app build never runs Python. Run `npm run content:build` only after changing drafts.
+
 
 ## License
 
