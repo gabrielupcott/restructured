@@ -7,19 +7,31 @@ import {
   type RunHandlers,
   type TestOutcome,
 } from '../execution/runner'
-import { formatClock, formatMs } from '../lib/format'
+import type { AcceptRecord, Mode, SubmissionEntry } from '../game/progress'
+import { runtimeTier } from '../game/tiers'
+import { useStopwatch } from '../game/useStopwatch'
+import { computeXp } from '../game/xp'
+import { formatClock, formatMs, formatStamp } from '../lib/format'
 import PalettePicker from '../components/PalettePicker'
 import { smallestFailingIndex } from '../results/reveal'
-
+import QuizPanel from './QuizPanel'
+import ResultsPanel, { type SolveResult } from './ResultsPanel'
 interface ProblemScreenProps {
   problem: Problem
+  mode: Mode
   /** Failed submissions this session, for the hidden-test reveal. */
   failedSubmits: number
   onFailedSubmit: (id: string) => void
+  onAttempt: (id: string, mode: Mode) => void
+  onAccepted: (id: string, accept: AcceptRecord) => void
+  onResult: (id: string, result: { claimedTime: string | null; xp: number }) => void
+  onSubmitted: (id: string, entry: SubmissionEntry) => void
+  submissions: SubmissionEntry[]
   onBack: () => void
 }
 
 type Scope = 'visible' | 'all'
+type Phase = 'coding' | 'quiz' | 'results'
 
 function replaceAt<T>(items: T[], index: number, value: T): T[] {
   const next = items.slice()
@@ -102,8 +114,14 @@ function TestRow({
 
 export default function ProblemScreen({
   problem,
+  mode,
   failedSubmits,
   onFailedSubmit,
+  onAttempt,
+  onAccepted,
+  onResult,
+  onSubmitted,
+  submissions,
   onBack,
 }: ProblemScreenProps) {
   const [code, setCode] = useState(problem.starterCode)
@@ -116,6 +134,14 @@ export default function ProblemScreen({
   const [sandboxResets, setSandboxResets] = useState(0)
   const [stopped, setStopped] = useState(false)
   const [lintDiagnostics, setLintDiagnostics] = useState<LintDiagnostic[]>([])
+  const [phase, setPhase] = useState<Phase>('coding')
+  const [hintsRevealed, setHintsRevealed] = useState(0)
+  const [solutionRevealed, setSolutionRevealed] = useState(false)
+  const [pendingAccept, setPendingAccept] = useState<AcceptRecord | null>(null)
+  const [solve, setSolve] = useState<SolveResult | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [expandedSubmission, setExpandedSubmission] = useState<number | null>(null)
+  const clock = useStopwatch()
 
   // Boot the shared runtime as soon as the screen opens so lint and runs are
   // ready by the time the player finishes reading.
@@ -137,6 +163,52 @@ export default function ProblemScreen({
     return () => clearTimeout(timer)
   }, [code, running])
 
+  /**
+   * Finalizes one accepted solve. selfTime is the player's honest claim
+   * about their own solution and only drives the improve-it reveal; the
+   * optimal pair is what gets graded for XP. Both null when the quiz was
+   * skipped or the solution was already revealed.
+   */
+  function finishSolve(
+    accept: AcceptRecord,
+    selfTime: string | null,
+    optimal: { time: string; space: string } | null,
+  ) {
+    const quizCorrect =
+      optimal !== null &&
+      optimal.time === problem.expectedComplexity.time &&
+      optimal.space === problem.expectedComplexity.space
+    const xp = computeXp(problem.difficulty, hintsRevealed, solutionRevealed, quizCorrect)
+    onResult(problem.id, { claimedTime: selfTime, xp })
+    setSolve({
+      ...accept,
+      xp,
+      quizCorrect,
+      quizSkipped: optimal === null,
+      solutionRevealed,
+      claimedTime: selfTime,
+    })
+    setPendingAccept(null)
+    setPhase('results')
+  }
+
+  /** Called when a submit passes every visible and hidden test. */
+  function acceptSolve(runtimeMs: number) {
+    const accept: AcceptRecord = {
+      mode,
+      timeSec: clock.getSeconds(),
+      runtimeMs,
+      tier: runtimeTier(runtimeMs, problem.anchors),
+    }
+    onAccepted(problem.id, accept)
+    if (solutionRevealed) {
+      finishSolve(accept, null, null)
+    } else {
+      setPendingAccept(accept)
+      setPhase('quiz')
+    }
+  }
+
   async function execute(nextScope: Scope) {
     if (running) return
     const tests: TestCase[] =
@@ -152,6 +224,7 @@ export default function ProblemScreen({
     setLintDiagnostics([])
     setVisibleOutcomes(problem.tests.visible.map(() => null))
     setHiddenOutcomes(nextScope === 'all' ? problem.tests.hidden.map(() => null) : [])
+    if (nextScope === 'all') onAttempt(problem.id, mode)
 
     const handlers: RunHandlers = {
       onStatus: setStatus,
@@ -169,12 +242,28 @@ export default function ProblemScreen({
       const result = await getSharedRunner().runTests({ code, functionName: problem.functionName, tests }, handlers)
       if (result.sandboxResets > 0) setSandboxResets((prev) => prev + result.sandboxResets)
       if (result.stopped) setStopped(true)
+      if (nextScope === 'all' && !result.stopped) {
+        const allPassed =
+          collected.length === tests.length && collected.every((o) => o?.status === 'pass')
+        const hiddenStart = problem.tests.visible.length
+        const runtimeMs = collected
+          .slice(hiddenStart, tests.length)
+          .reduce((total, outcome) => total + (outcome?.runtimeMs ?? 0), 0)
+        onSubmitted(problem.id, {
+          at: Date.now(),
+          mode,
+          accepted: allPassed,
+          passed: collected.filter((o) => o?.status === 'pass').length,
+          total: tests.length,
+          runtimeMs: allPassed ? runtimeMs : undefined,
+          code,
+        })
+        if (allPassed) acceptSolve(runtimeMs)
+        else onFailedSubmit(problem.id)
+      }
     } finally {
       setRunning(false)
       setStatus(null)
-      if (nextScope === 'all' && collected.some((o) => o && o.status !== 'pass')) {
-        onFailedSubmit(problem.id)
-      }
     }
   }
 
@@ -199,6 +288,8 @@ export default function ProblemScreen({
     summary = `VISIBLE: ${visiblePassed}/${visibleOutcomes.length} PASSED`
   }
 
+  const overtime = mode === 'challenge' && clock.elapsedSec >= problem.parTimeSec
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <header className="flex items-center gap-4 border-b-2 border-dos-text px-4 py-2">
@@ -212,14 +303,32 @@ export default function ProblemScreen({
         <span className={`text-xs ${difficultyClass(problem.difficulty)}`}>
           {problem.difficulty.toUpperCase()}
         </span>
-        <span className="ml-auto text-xs text-dos-dim">
-          PAR {formatClock(problem.parTimeSec)}
-        </span>
+        {mode === 'challenge' ? (
+          <span className={`ml-auto text-sm ${overtime ? 'text-dos-red' : 'text-dos-dim'}`}>
+            {formatClock(clock.elapsedSec)}
+            {overtime && ` (par ${formatClock(problem.parTimeSec)}, OVERTIME)`}
+          </span>
+        ) : (
+          <span className="ml-auto text-sm text-dos-dim">PRACTICE</span>
+        )}
         <PalettePicker />
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 md:grid-rows-1">
         <aside className="max-h-[35vh] min-h-0 overflow-y-auto border-b-2 border-dos-faint p-4 text-sm leading-relaxed md:max-h-none md:border-b-0 md:border-r-2">
+          {phase === 'quiz' && pendingAccept ? (
+            <QuizPanel
+              problem={problem}
+              onContinue={(selfTime, optimalTime, optimalSpace) =>
+                finishSolve(pendingAccept, selfTime, {
+                  time: optimalTime,
+                  space: optimalSpace,
+                })
+              }
+              onSkip={() => finishSolve(pendingAccept, null, null)}
+            />
+          ) : (
+            <>
           <h2 className="text-xs tracking-widest text-dos-cyan">BRIEFING</h2>
           <p className="mt-2 whitespace-pre-wrap">{problem.description}</p>
 
@@ -243,6 +352,107 @@ export default function ProblemScreen({
               <li key={i}>{constraint}</li>
             ))}
           </ul>
+
+          <h2 className="mt-6 text-xs tracking-widest text-dos-cyan">INTEL</h2>
+          <p className="mt-1 text-xs text-dos-faint">
+            Each hint cuts XP by 20%. The full solution locks in 10%.
+          </p>
+          <div className="mt-2 space-y-2">
+            {problem.hints.map((hint, i) => {
+              if (i < hintsRevealed) {
+                return (
+                  <div key={i} className="border-l-2 border-dos-faint pl-3 text-dos-dim">
+                    <div className="text-xs text-dos-faint">HINT {i + 1}</div>
+                    {hint}
+                  </div>
+                )
+              }
+              if (i === hintsRevealed) {
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setHintsRevealed(i + 1)}
+                    className="border border-dos-yellow px-2 py-0.5 text-xs text-dos-yellow hover:bg-dos-yellow hover:text-dos-bg"
+                  >
+                    REVEAL HINT {i + 1}
+                  </button>
+                )
+              }
+              return null
+            })}
+            {solutionRevealed ? (
+              <div className="border-l-2 border-dos-yellow pl-3">
+                <div className="text-xs text-dos-yellow">SOLUTION</div>
+                <p className="text-dos-dim">{problem.solution}</p>
+                <pre className="mt-1 overflow-x-auto text-dos-dim">{problem.solutionCode}</pre>
+              </div>
+            ) : (
+              hintsRevealed === problem.hints.length && (
+                <button
+                  onClick={() => setSolutionRevealed(true)}
+                  className="border border-dos-magenta px-2 py-0.5 text-xs text-dos-magenta hover:bg-dos-magenta hover:text-dos-bg"
+                >
+                  REVEAL SOLUTION (flat 10% XP)
+                </button>
+              )
+            )}
+          </div>
+
+          <h2 className="mt-6 text-xs tracking-widest text-dos-cyan">SUBMISSIONS</h2>
+          <div className="mt-2">
+            <button
+              onClick={() => setHistoryOpen(!historyOpen)}
+              className="border border-dos-faint px-2 py-0.5 text-xs hover:border-dos-text hover:text-dos-text"
+            >
+              {historyOpen ? 'HIDE HISTORY' : `VIEW (${submissions.length})`}
+            </button>
+            {historyOpen && (
+              <div className="mt-2 space-y-2">
+                {submissions.length === 0 && (
+                  <div className="text-xs text-dos-faint">no submissions yet</div>
+                )}
+                {submissions.map((submission, i) => (
+                  <div key={`${submission.at}-${i}`} className="border-l-2 border-dos-faint pl-3">
+                    <button
+                      onClick={() => setExpandedSubmission(expandedSubmission === i ? null : i)}
+                      className="flex w-full flex-wrap items-center gap-2 text-left text-xs"
+                    >
+                      <span className={submission.accepted ? 'text-dos-green' : 'text-dos-red'}>
+                        {submission.accepted ? 'ACCEPTED' : 'FAILED'}
+                      </span>
+                      <span className="text-dos-dim">
+                        {submission.mode === 'challenge' ? 'CHALLENGE' : 'PRACTICE'}
+                      </span>
+                      <span className="text-dos-faint">
+                        {submission.passed}/{submission.total} tests
+                      </span>
+                      <span className="ml-auto text-dos-faint">{formatStamp(submission.at)}</span>
+                    </button>
+                    {expandedSubmission === i && (
+                      <div className="mt-1">
+                        {submission.runtimeMs !== undefined && (
+                          <div className="text-xs text-dos-dim">
+                            runtime {formatMs(submission.runtimeMs)}
+                          </div>
+                        )}
+                        <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-dos-dim">
+                          {submission.code}
+                        </pre>
+                        <button
+                          onClick={() => setCode(submission.code)}
+                          className="mt-1 border border-dos-cyan px-2 py-0.5 text-xs text-dos-cyan hover:bg-dos-cyan hover:text-dos-bg"
+                        >
+                          LOAD INTO EDITOR
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+            </>
+          )}
         </aside>
 
         <section className="flex min-h-0 flex-col">
@@ -323,14 +533,14 @@ export default function ProblemScreen({
           <div className="flex-1 text-xs text-dos-dim">{summary}</div>
           <button
             onClick={() => execute('visible')}
-            disabled={running}
+            disabled={running || phase !== 'coding'}
             className="border-2 border-dos-text px-5 py-1 text-sm hover:bg-dos-text hover:text-dos-bg disabled:cursor-not-allowed disabled:opacity-40"
           >
             RUN
           </button>
           <button
             onClick={() => execute('all')}
-            disabled={running}
+            disabled={running || phase !== 'coding'}
             className="border-2 border-dos-cyan px-5 py-1 text-sm text-dos-cyan hover:bg-dos-cyan hover:text-dos-bg disabled:cursor-not-allowed disabled:opacity-40"
           >
             SUBMIT
@@ -344,6 +554,19 @@ export default function ProblemScreen({
           </button>
         </div>
       </footer>
+
+      {phase === 'results' && solve && (
+        <ResultsPanel
+          problem={problem}
+          mode={mode}
+          result={solve}
+          onImprove={() => {
+            setSolve(null)
+            setPhase('coding')
+          }}
+          onBack={onBack}
+        />
+      )}
     </div>
   )
 }

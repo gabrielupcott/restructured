@@ -8,7 +8,9 @@ The full product scope lives in [leetcode-game-scope.md](./leetcode-game-scope.m
 
 ## Status
 
-Alpha 1 is complete: eight verified problems across four tracks, the DOS-themed Monaco editor with pyflakes linting, run and submit with a stop control, per-test wall-clock timeouts with sandbox-reset recovery, tiered hidden-test feedback, and the palette system with presets plus custom colors. Next up: the game mechanics (timer, XP, Big-O quiz, progression, records).
+Alpha 1 shipped the core loop: eight verified problems across four tracks, the DOS-themed Monaco editor with pyflakes linting, run and submit with a stop control, per-test wall-clock timeouts with sandbox-reset recovery, tiered hidden-test feedback, and the palette system with presets plus custom colors.
+
+Alpha 2 adds the game mechanics: Challenge and Practice modes, a never-pausing timer with soft expiry and OVERTIME, the three-hint ladder with solution reveal, the Big-O quiz with the improve-it loop, XP with hint and quiz modifiers, track progression with unlocks, per-mode personal records, display-only streaks, and a local submission history (the last 20 per problem, viewable and restorable from the problem screen). All progress persists locally in `localStorage`. Next up: the visual polish pass (colorful UI, animations, sound, progress map).
 
 ## Tech stack
 
@@ -48,9 +50,10 @@ scripts/             Content pipeline + runtime copy scripts
 src/components/      CodeEditor (Monaco, DOS theme) and PalettePicker
 src/content/         Schema types, content loader, generated/ (committed bundles)
 src/execution/      Python test harness, Pyodide worker, main-thread runner
+src/game/           XP, complexity ladder, runtime tiers, progress store, track grouping, stopwatch
 src/lib/             Small shared helpers
 src/results/         Hidden-test reveal logic
-src/screens/         ProblemScreen
+src/screens/         MenuScreen (tracks, unlocks, records) and ProblemScreen with quiz + results
 src/theme/           Palette presets, application, and persistence
 ```
 
