@@ -1,6 +1,6 @@
 {
   "id": "longest-substring",
-  "title": "Longest Substring Without Repeating Characters",
+  "title": "Longest Substring Without Repeating",
   "track": "Strings",
   "difficulty": "medium",
   "topics": ["strings", "sliding-window"],

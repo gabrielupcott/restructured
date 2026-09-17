@@ -78,6 +78,9 @@ function requireFields(draft: ProblemDraft): void {
       throw new Error(`${draft.id ?? '?'}: missing required field "${field}"`)
     }
   }
+  if (typeof draft.title === 'string' && draft.title.length > 40) {
+    throw new Error(`${draft.id}: title exceeds the 40 character cap`)
+  }
   if (draft.hints.length !== 3) {
     throw new Error(`${draft.id}: hint ladder must have exactly 3 hints`)
   }

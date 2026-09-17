@@ -1357,8 +1357,8 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 0.21739544186046564,
-      "bruteForceRuntimeMs": 68.60234400000002
+      "optimalRuntimeMs": 0.2301210000000009,
+      "bruteForceRuntimeMs": 68.10223849999991
     }
   },
   {
@@ -7527,8 +7527,8 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 0.45510199999999834,
-      "bruteForceRuntimeMs": 195.557135076923
+      "optimalRuntimeMs": 0.4477154999999966,
+      "bruteForceRuntimeMs": 196.19425946969727
     }
   },
   {
@@ -8980,13 +8980,13 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 0.7272409374999935,
-      "bruteForceRuntimeMs": 6.23535800000001
+      "optimalRuntimeMs": 0.7359749402985017,
+      "bruteForceRuntimeMs": 6.573067499999878
     }
   },
   {
     "id": "longest-substring",
-    "title": "Longest Substring Without Repeating Characters",
+    "title": "Longest Substring Without Repeating",
     "track": "Strings",
     "difficulty": "medium",
     "topics": [
@@ -9103,8 +9103,8 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 3.8457344999999954,
-      "bruteForceRuntimeMs": 44.36044649999979
+      "optimalRuntimeMs": 4.017935499999994,
+      "bruteForceRuntimeMs": 43.669001000000065
     }
   },
   {
@@ -13404,8 +13404,8 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 0.8748211538461553,
-      "bruteForceRuntimeMs": 67.75293549999968
+      "optimalRuntimeMs": 0.8752413673469431,
+      "bruteForceRuntimeMs": 68.57141550000011
     }
   },
   {
@@ -15659,8 +15659,8 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 0.3032424194630866,
-      "bruteForceRuntimeMs": 120.38172650000017
+      "optimalRuntimeMs": 0.3161323225806421,
+      "bruteForceRuntimeMs": 121.5439729999999
     }
   },
   {
@@ -15795,8 +15795,8 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 0.3788019850746286,
-      "bruteForceRuntimeMs": 1.2040815000000027
+      "optimalRuntimeMs": 0.3801580370370335,
+      "bruteForceRuntimeMs": 1.2033167948717904
     }
   },
   {
@@ -15912,8 +15912,8 @@ export const PROBLEMS: Problem[] = [
       ]
     },
     "anchors": {
-      "optimalRuntimeMs": 2.8170344999999974,
-      "bruteForceRuntimeMs": 7.941892500000131
+      "optimalRuntimeMs": 2.8013779999999877,
+      "bruteForceRuntimeMs": 7.978329000000186
     }
   }
 ]

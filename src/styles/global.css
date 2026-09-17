@@ -23,19 +23,101 @@
   --color-dos-dim: color-mix(in srgb, var(--color-dos-text) 75%, var(--color-dos-bg));
   --color-dos-faint: color-mix(in srgb, var(--color-dos-text) 50%, var(--color-dos-bg));
 
-  /* Bright DOS accents, shared across palettes. */
+  /* Bright DOS accents, shared across palettes. Orange marks slow runtimes. */
   --color-dos-white: #ffffff;
   --color-dos-green: #55ff55;
   --color-dos-red: #ff5555;
   --color-dos-yellow: #ffff55;
   --color-dos-cyan: #55ffff;
   --color-dos-magenta: #ff55ff;
+  --color-dos-orange: #ffaa00;
+
+  /*
+   * Track accents (one hue per track, see src/game/tracks.ts). Each hue
+   * mixes into both palette channels so it adapts to the active palette:
+   * the plain tint reads on the canvas, the deep tint reads on top of the
+   * light text channel (hover fills, inverted chips). Verified against the
+   * green and orange presets, the two lightest.
+   */
+  --color-track-arrays: color-mix(in srgb, #ffb000 80%, var(--color-dos-text));
+  --color-track-arrays-deep: color-mix(in srgb, #ffb000 55%, var(--color-dos-bg));
+  --color-track-strings: color-mix(in srgb, #55ff55 80%, var(--color-dos-text));
+  --color-track-strings-deep: color-mix(in srgb, #55ff55 55%, var(--color-dos-bg));
+  --color-track-hashmaps: color-mix(in srgb, #55ffff 80%, var(--color-dos-text));
+  --color-track-hashmaps-deep: color-mix(in srgb, #55ffff 55%, var(--color-dos-bg));
+  --color-track-twopointers: color-mix(in srgb, #ff55ff 80%, var(--color-dos-text));
+  --color-track-twopointers-deep: color-mix(in srgb, #ff55ff 55%, var(--color-dos-bg));
 }
 
 body {
   background: var(--color-dos-bg);
   color: var(--color-dos-text);
   font-family: var(--font-dos);
+}
+
+/*
+ * Motion (Alpha 3). Decorative classes only; the media rule at the bottom
+ * renders every one of them static when the user asks for reduced motion.
+ */
+@keyframes dos-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dos-scanline {
+  from { top: -2px; }
+  to { top: 100%; }
+}
+@keyframes dos-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+@keyframes dos-pop {
+  0% { transform: scale(0.5); }
+  65% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@keyframes dos-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+@keyframes dos-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-in { animation: dos-fade-in 150ms ease-out both; }
+.anim-scanline { animation: dos-scanline 850ms linear 1 both; }
+.anim-blink { animation: dos-blink 1s steps(1) infinite; }
+.anim-pop { animation: dos-pop 240ms ease-out both; }
+.anim-shake-once { animation: dos-shake 320ms ease-in-out 1; }
+.anim-slide-in { animation: dos-slide-in 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-in,
+  .anim-scanline,
+  .anim-blink,
+  .anim-pop,
+  .anim-shake-once,
+  .anim-slide-in {
+    animation: none;
+  }
+}
+
+/* Mechanical press feedback for every button, DOS style. */
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/*
+ * Keyboard focus visibility: a white ring stays readable on all five
+ * palette canvases. Pointer clicks do not show it (focus-visible only).
+ */
+:focus-visible {
+  outline: 2px solid var(--color-dos-white);
+  outline-offset: 2px;
 }
 
 ::selection {

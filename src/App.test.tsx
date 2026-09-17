@@ -6,7 +6,8 @@ describe('App', () => {
   it('renders the title, the problem list, and the stats line', () => {
     const html = renderToString(<App />)
     expect(html).toContain('RESTRUCTURED')
-    expect(html).toContain('ALPHA 2')
+    expect(html).toContain('ALPHA 3')
+    expect(html).toContain('BEGINNER')
     expect(html).toContain('Two Sum')
     expect(html).toContain('Contains Duplicate')
     expect(html).toContain('05:00')

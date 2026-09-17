@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CodeEditor from '../components/CodeEditor'
 import type { Problem, TestCase } from '../content/types'
 import type { LintDiagnostic } from '../execution/protocol'
@@ -9,16 +9,21 @@ import {
 } from '../execution/runner'
 import type { AcceptRecord, Mode, SubmissionEntry } from '../game/progress'
 import { runtimeTier } from '../game/tiers'
+import { trackIdentity } from '../game/tracks'
+import { play } from '../game/sound'
 import { useStopwatch } from '../game/useStopwatch'
 import { computeXp } from '../game/xp'
 import { formatClock, formatMs, formatStamp } from '../lib/format'
 import PalettePicker from '../components/PalettePicker'
+import SoundToggle from '../components/SoundToggle'
 import { smallestFailingIndex } from '../results/reveal'
 import QuizPanel from './QuizPanel'
 import ResultsPanel, { type SolveResult } from './ResultsPanel'
 interface ProblemScreenProps {
   problem: Problem
   mode: Mode
+  /** Cosmetic player title from total XP, shown on the results screen. */
+  rank: string
   /** Failed submissions this session, for the hidden-test reveal. */
   failedSubmits: number
   onFailedSubmit: (id: string) => void
@@ -81,8 +86,14 @@ function TestRow({
     <div className="border-b border-dos-faint py-2">
       <div className="flex items-center gap-3">
         <span className="text-dos-dim">{title}</span>
-        {chip ? (
-          <span className={`${chip.class} font-bold`}>{chip.label}</span>
+        {outcome && chip ? (
+          <span
+            className={`${chip.class} font-bold ${
+              outcome.status === 'pass' ? 'anim-pop' : 'anim-shake-once'
+            }`}
+          >
+            {chip.label}
+          </span>
         ) : (
           <span className="text-dos-faint">{pending ? '...' : ''}</span>
         )}
@@ -115,6 +126,7 @@ function TestRow({
 export default function ProblemScreen({
   problem,
   mode,
+  rank,
   failedSubmits,
   onFailedSubmit,
   onAttempt,
@@ -142,6 +154,7 @@ export default function ProblemScreen({
   const [historyOpen, setHistoryOpen] = useState(false)
   const [expandedSubmission, setExpandedSubmission] = useState<number | null>(null)
   const clock = useStopwatch()
+  const overtimeAnnounced = useRef(false)
 
   // Boot the shared runtime as soon as the screen opens so lint and runs are
   // ready by the time the player finishes reading.
@@ -201,6 +214,7 @@ export default function ProblemScreen({
       tier: runtimeTier(runtimeMs, problem.anchors),
     }
     onAccepted(problem.id, accept)
+    play('submit-accept')
     if (solutionRevealed) {
       finishSolve(accept, null, null)
     } else {
@@ -222,8 +236,21 @@ export default function ProblemScreen({
     setCompileError(null)
     setStopped(false)
     setLintDiagnostics([])
-    setVisibleOutcomes(problem.tests.visible.map(() => null))
-    setHiddenOutcomes(nextScope === 'all' ? problem.tests.hidden.map(() => null) : [])
+    play('run-start')
+    // Keep the previous run's results on screen while the new one executes:
+    // blanking them collapses the section and makes the footer jump. The
+    // first run gets pending rows; later runs stream over the stale ones.
+    setVisibleOutcomes((prev) =>
+      prev.length === problem.tests.visible.length
+        ? prev
+        : problem.tests.visible.map(() => null),
+    )
+    setHiddenOutcomes((prev) => {
+      if (nextScope !== 'all') return []
+      return prev.length === problem.tests.hidden.length
+        ? prev
+        : problem.tests.hidden.map(() => null)
+    })
     if (nextScope === 'all') onAttempt(problem.id, mode)
 
     const handlers: RunHandlers = {
@@ -231,6 +258,7 @@ export default function ProblemScreen({
       onCompileError: setCompileError,
       onTestResult: (index, outcome) => {
         collected.push(outcome)
+        play(outcome?.status === 'pass' ? 'test-pass' : 'test-fail')
         if (index < problem.tests.visible.length) {
           setVisibleOutcomes((prev) => replaceAt(prev, index, outcome))
         } else {
@@ -240,6 +268,7 @@ export default function ProblemScreen({
     }
     try {
       const result = await getSharedRunner().runTests({ code, functionName: problem.functionName, tests }, handlers)
+      console.log(`[execute] done at ${performance.now().toFixed(0)}ms`, result)
       if (result.sandboxResets > 0) setSandboxResets((prev) => prev + result.sandboxResets)
       if (result.stopped) setStopped(true)
       if (nextScope === 'all' && !result.stopped) {
@@ -259,7 +288,10 @@ export default function ProblemScreen({
           code,
         })
         if (allPassed) acceptSolve(runtimeMs)
-        else onFailedSubmit(problem.id)
+        else {
+          onFailedSubmit(problem.id)
+          play('submit-fail')
+        }
       }
     } finally {
       setRunning(false)
@@ -289,28 +321,45 @@ export default function ProblemScreen({
   }
 
   const overtime = mode === 'challenge' && clock.elapsedSec >= problem.parTimeSec
+  const identity = trackIdentity(problem.track)
+
+  // The overtime alert fires once per problem, not once per tick.
+  useEffect(() => {
+    if (overtime && !overtimeAnnounced.current) {
+      overtimeAnnounced.current = true
+      play('overtime')
+    }
+  }, [overtime])
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
-      <header className="flex items-center gap-4 border-b-2 border-dos-text px-4 py-2">
+    <div className="anim-fade-in flex h-dvh flex-col overflow-hidden">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b-2 border-dos-text px-4 py-2">
         <button
           onClick={onBack}
           className="border-2 border-dos-dim px-2 py-1 text-xs text-dos-dim hover:border-dos-text hover:text-dos-text"
         >
           &lt; BACK
         </button>
-        <h1 className="text-xl font-bold tracking-widest">{problem.title}</h1>
+        <h1 className="min-w-0 text-lg font-bold tracking-widest md:text-xl">
+          <span className={`mr-3 text-sm ${identity.textClass}`}>{identity.motif}</span>
+          {problem.title}
+        </h1>
         <span className={`text-xs ${difficultyClass(problem.difficulty)}`}>
           {problem.difficulty.toUpperCase()}
         </span>
         {mode === 'challenge' ? (
-          <span className={`ml-auto text-sm ${overtime ? 'text-dos-red' : 'text-dos-dim'}`}>
+          <span
+            className={`ml-auto text-sm ${
+              overtime ? 'anim-blink text-dos-red' : 'text-dos-dim'
+            }`}
+          >
             {formatClock(clock.elapsedSec)}
             {overtime && ` (par ${formatClock(problem.parTimeSec)}, OVERTIME)`}
           </span>
         ) : (
           <span className="ml-auto text-sm text-dos-dim">PRACTICE</span>
         )}
+        <SoundToggle />
         <PalettePicker />
       </header>
 
@@ -329,10 +378,10 @@ export default function ProblemScreen({
             />
           ) : (
             <>
-          <h2 className="text-xs tracking-widest text-dos-cyan">BRIEFING</h2>
+          <h2 className={`text-xs tracking-widest ${identity.textClass}`}>BRIEFING</h2>
           <p className="mt-2 whitespace-pre-wrap">{problem.description}</p>
 
-          <h2 className="mt-6 text-xs tracking-widest text-dos-cyan">EXAMPLES</h2>
+          <h2 className={`mt-6 text-xs tracking-widest ${identity.textClass}`}>EXAMPLES</h2>
           <div className="mt-2 space-y-3">
             {problem.examples.map((example, i) => (
               <div key={i} className="border-l-2 border-dos-faint pl-3">
@@ -346,14 +395,14 @@ export default function ProblemScreen({
             ))}
           </div>
 
-          <h2 className="mt-6 text-xs tracking-widest text-dos-cyan">CONSTRAINTS</h2>
+          <h2 className={`mt-6 text-xs tracking-widest ${identity.textClass}`}>CONSTRAINTS</h2>
           <ul className="mt-2 list-disc pl-4">
             {problem.constraints.map((constraint, i) => (
               <li key={i}>{constraint}</li>
             ))}
           </ul>
 
-          <h2 className="mt-6 text-xs tracking-widest text-dos-cyan">INTEL</h2>
+          <h2 className={`mt-6 text-xs tracking-widest ${identity.textClass}`}>INTEL</h2>
           <p className="mt-1 text-xs text-dos-faint">
             Each hint cuts XP by 20%. The full solution locks in 10%.
           </p>
@@ -361,7 +410,10 @@ export default function ProblemScreen({
             {problem.hints.map((hint, i) => {
               if (i < hintsRevealed) {
                 return (
-                  <div key={i} className="border-l-2 border-dos-faint pl-3 text-dos-dim">
+                  <div
+                    key={i}
+                    className="anim-slide-in border-l-2 border-dos-faint pl-3 text-dos-dim"
+                  >
                     <div className="text-xs text-dos-faint">HINT {i + 1}</div>
                     {hint}
                   </div>
@@ -371,7 +423,10 @@ export default function ProblemScreen({
                 return (
                   <button
                     key={i}
-                    onClick={() => setHintsRevealed(i + 1)}
+                    onClick={() => {
+                      setHintsRevealed(i + 1)
+                      play('hint-reveal')
+                    }}
                     className="border border-dos-yellow px-2 py-0.5 text-xs text-dos-yellow hover:bg-dos-yellow hover:text-dos-bg"
                   >
                     REVEAL HINT {i + 1}
@@ -381,7 +436,7 @@ export default function ProblemScreen({
               return null
             })}
             {solutionRevealed ? (
-              <div className="border-l-2 border-dos-yellow pl-3">
+              <div className="anim-slide-in border-l-2 border-dos-yellow pl-3">
                 <div className="text-xs text-dos-yellow">SOLUTION</div>
                 <p className="text-dos-dim">{problem.solution}</p>
                 <pre className="mt-1 overflow-x-auto text-dos-dim">{problem.solutionCode}</pre>
@@ -389,7 +444,10 @@ export default function ProblemScreen({
             ) : (
               hintsRevealed === problem.hints.length && (
                 <button
-                  onClick={() => setSolutionRevealed(true)}
+                  onClick={() => {
+                    setSolutionRevealed(true)
+                    play('hint-reveal')
+                  }}
                   className="border border-dos-magenta px-2 py-0.5 text-xs text-dos-magenta hover:bg-dos-magenta hover:text-dos-bg"
                 >
                   REVEAL SOLUTION (flat 10% XP)
@@ -398,7 +456,7 @@ export default function ProblemScreen({
             )}
           </div>
 
-          <h2 className="mt-6 text-xs tracking-widest text-dos-cyan">SUBMISSIONS</h2>
+          <h2 className={`mt-6 text-xs tracking-widest ${identity.textClass}`}>SUBMISSIONS</h2>
           <div className="mt-2">
             <button
               onClick={() => setHistoryOpen(!historyOpen)}
@@ -482,7 +540,7 @@ export default function ProblemScreen({
             ■ SANDBOX RESET: a test hung past the wall clock and the worker was reloaded
           </div>
         )}
-        <div className="max-h-56 overflow-y-auto px-3 py-2 text-xs">
+        <div className="min-h-[6.5rem] max-h-56 overflow-y-auto px-3 py-2 text-xs">
           {scope === null && (
             <div className="text-dos-faint">
               RUN executes the visible tests. SUBMIT runs every test, including hidden ones.
@@ -560,6 +618,7 @@ export default function ProblemScreen({
           problem={problem}
           mode={mode}
           result={solve}
+          rank={rank}
           onImprove={() => {
             setSolve(null)
             setPhase('coding')

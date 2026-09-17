@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { Problem } from '../content/types'
 import { quizOptions } from '../game/complexity'
+import { play } from '../game/sound'
+import { trackIdentity } from '../game/tracks'
 
 interface QuizPanelProps {
   problem: Problem
@@ -14,16 +16,18 @@ function Question({
   options,
   value,
   onPick,
+  labelClass,
 }: {
   label: string
   hint: string
   options: string[]
   value: string | null
   onPick(option: string): void
+  labelClass: string
 }) {
   return (
     <div className="mt-5">
-      <div className="text-xs tracking-widest text-dos-cyan">{label}</div>
+      <div className={`text-xs tracking-widest ${labelClass}`}>{label}</div>
       <div className="mt-0.5 text-xs text-dos-faint">{hint}</div>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {options.map((option) => (
@@ -58,9 +62,23 @@ export default function QuizPanel({ problem, onContinue, onSkip }: QuizPanelProp
   const [optimalSpace, setOptimalSpace] = useState<string | null>(null)
   const ready =
     selfTime !== null && optimalTime !== null && optimalSpace !== null
+  const identity = trackIdentity(problem.track)
+
+  /**
+   * The space pick completes the scored pair, so the chime or the miss
+   * fires here, graded against expectedComplexity. Re-picking replays it.
+   */
+  function pickOptimalSpace(option: string) {
+    setOptimalSpace(option)
+    if (selfTime === null || optimalTime === null) return
+    const correct =
+      optimalTime === problem.expectedComplexity.time &&
+      option === problem.expectedComplexity.space
+    play(correct ? 'quiz-correct' : 'quiz-miss')
+  }
 
   return (
-    <div className="border-2 border-dos-cyan p-4">
+    <div className={`border-2 p-4 ${identity.borderClass}`}>
       <h2 className="font-pixel text-3xl tracking-widest text-dos-white">COMPLEXITY CHECK</h2>
       <p className="mt-2 text-xs text-dos-dim">
         Claim what your solution costs, then name the optimum. The claim is free; the optimum pays.
@@ -71,6 +89,7 @@ export default function QuizPanel({ problem, onContinue, onSkip }: QuizPanelProp
         options={quizOptions(problem.expectedComplexity.time)}
         value={selfTime}
         onPick={setSelfTime}
+        labelClass={identity.textClass}
       />
       <Question
         label="OPTIMUM, TIME"
@@ -78,13 +97,15 @@ export default function QuizPanel({ problem, onContinue, onSkip }: QuizPanelProp
         options={quizOptions(problem.expectedComplexity.time)}
         value={optimalTime}
         onPick={setOptimalTime}
+        labelClass={identity.textClass}
       />
       <Question
         label="OPTIMUM, SPACE"
         hint="the best achievable"
         options={quizOptions(problem.expectedComplexity.space)}
         value={optimalSpace}
-        onPick={setOptimalSpace}
+        onPick={pickOptimalSpace}
+        labelClass={identity.textClass}
       />
       <div className="mt-6 flex items-center gap-3">
         <button

@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react'
 import type { Problem } from '../content/types'
 import type { Mode } from '../game/progress'
 import { isWorseThanExpected } from '../game/complexity'
+import { useReducedMotion } from '../game/motion'
 import { TIER_LABEL, type RuntimeTier } from '../game/tiers'
+import { trackIdentity } from '../game/tracks'
 import { formatClock, formatMs } from '../lib/format'
 
 export interface SolveResult {
@@ -19,6 +22,7 @@ interface ResultsPanelProps {
   problem: Problem
   mode: Mode
   result: SolveResult
+  rank: string
   onImprove(): void
   onBack(): void
 }
@@ -39,15 +43,40 @@ export default function ResultsPanel({
   problem,
   mode,
   result,
+  rank,
   onImprove,
   onBack,
 }: ResultsPanelProps) {
   const reveal = isWorseThanExpected(result.claimedTime, problem.expectedComplexity.time)
+  const identity = trackIdentity(problem.track)
+  const reduced = useReducedMotion()
+
+  /**
+   * XP counts up over 0.9s, then the tier label stamps in. Reduced motion
+   * renders both instantly at their final state.
+   */
+  const [displayXp, setDisplayXp] = useState(() => (reduced ? result.xp : 0))
+  const [stamped, setStamped] = useState(reduced)
+  useEffect(() => {
+    if (reduced) return
+    const duration = 900
+    let frame: number
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1)
+      setDisplayXp(Math.round(result.xp * t))
+      if (t < 1) frame = requestAnimationFrame(tick)
+      else setStamped(true)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [reduced, result.xp])
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-dos-bg p-4">
-      <div className="w-full max-w-xl border-2 border-dos-text p-6">
+      <div className={`w-full max-w-xl border-2 p-6 ${identity.borderClass}`}>
         <h2 className="font-pixel text-4xl tracking-widest text-dos-white">
+          <span className={`mr-3 ${identity.textClass}`}>{identity.motif}</span>
           {mode === 'challenge' ? 'CHALLENGE CLEAR' : 'PRACTICE CLEAR'}
         </h2>
 
@@ -60,12 +89,18 @@ export default function ResultsPanel({
             <span className="w-28 text-dos-dim">Runtime:</span>
             <span>
               {formatMs(result.runtimeMs)}{' '}
-              <span className="text-dos-cyan">({TIER_LABEL[result.tier]})</span>
+              {stamped && (
+                <span className="anim-pop text-dos-cyan">({TIER_LABEL[result.tier]})</span>
+              )}
             </span>
           </div>
           <div className="flex">
             <span className="w-28 text-dos-dim">XP:</span>
-            <span className="text-dos-white">{result.xp}</span>
+            <span className="text-dos-white">{displayXp}</span>
+          </div>
+          <div className="flex">
+            <span className="w-28 text-dos-dim">Rank:</span>
+            <span>{rank}</span>
           </div>
         </div>
 
