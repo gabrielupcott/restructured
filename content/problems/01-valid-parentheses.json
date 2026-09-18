@@ -1,0 +1,108 @@
+{
+  "id": "01-valid-parentheses",
+  "title": "Valid Parentheses",
+  "track": "Stacks",
+  "difficulty": "easy",
+  "topics": [
+    "stacks",
+    "strings"
+  ],
+  "source": "canonical Valid Parentheses concept; description, examples, and tests re-authored",
+  "description": "The input is a string s made up only of the characters \"(\", \")\", \"[\", \"]\", \"{\" and \"}\". Return True when every opening bracket is closed by the same type of bracket, and every closing bracket happens after its opener, in the right nesting order. Otherwise return False. An empty string is valid.",
+  "constraints": [
+    "0 <= len(s) <= 5000",
+    "s contains only the six bracket characters"
+  ],
+  "parameters": [
+    "s"
+  ],
+  "functionName": "is_valid",
+  "starterCode": "def is_valid(s):\n    # Return True when the bracket string nests correctly.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "s": "([{}])"
+      },
+      "output": true,
+      "explanation": "Each bracket type opens and closes in the correct nested order."
+    },
+    {
+      "input": {
+        "s": "(]"
+      },
+      "output": false,
+      "explanation": "A parenthesis is closed by a square bracket of the wrong type."
+    }
+  ],
+  "hints": [
+    "The most recently opened bracket must be the first one closed. Which structure remembers \"most recent\" best?",
+    "Push openers as you meet them; each closer must match whatever was pushed last.",
+    "On an opener, push it. On a closer, pop and compare types: wrong type or an empty stack means False. True only if the stack ends empty."
+  ],
+  "solution": "Stack of open brackets: push each opener, and for each closer pop the stack and require the matching type; a mismatch or a pop from an empty stack fails, and a non-empty stack at the end fails. One pass: O(n) time, O(n) space.",
+  "solutionCode": "def is_valid(s):\n    match = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    stack = []\n    for ch in s:\n        if ch in \"([{\":\n            stack.append(ch)\n        elif not stack or stack.pop() != match[ch]:\n            return False\n    return not stack\n",
+  "bruteForceCode": "def is_valid(s):\n    pairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    current = list(s)\n    changed = True\n    while changed:\n        changed = False\n        reduced = []\n        i = 0\n        while i < len(current):\n            if i + 1 < len(current) and current[i] in \"([{\" and pairs.get(current[i + 1]) == current[i]:\n                i += 2\n                changed = True\n            else:\n                reduced.append(current[i])\n                i += 1\n        current = reduced\n    return len(current) == 0\n",
+  "failureHint": "hidden tests include an empty string, a lone opener, wrong-type nesting, and deep nesting",
+  "expectedComplexity": {
+    "time": "O(n)",
+    "space": "O(n)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          "([{}])"
+        ],
+        "failNote": "closers must match the most recent opener"
+      },
+      {
+        "args": [
+          "(]"
+        ],
+        "failNote": "closers must match the opener type"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          ""
+        ]
+      },
+      {
+        "args": [
+          "("
+        ]
+      },
+      {
+        "args": [
+          "()"
+        ]
+      },
+      {
+        "args": [
+          "()[]{}"
+        ]
+      },
+      {
+        "args": [
+          "([)]"
+        ]
+      },
+      {
+        "args": [
+          "((()))"
+        ]
+      },
+      {
+        "args": [
+          "{[()]}[]"
+        ]
+      },
+      {
+        "args": [
+          "(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))"
+        ]
+      }
+    ]
+  }
+}

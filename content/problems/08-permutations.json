@@ -1,0 +1,170 @@
+{
+  "id": "08-permutations",
+  "title": "Permutations",
+  "track": "Trees",
+  "difficulty": "medium",
+  "topics": [
+    "backtracking"
+  ],
+  "source": "canonical Permutations concept; description, examples, and tests re-authored",
+  "description": "The input is an array of distinct integers. Return every ordering of those values: all n! permutations. Sort the list of permutations ascending so the output is deterministic.",
+  "constraints": [
+    "1 <= len(nums) <= 6",
+    "-9 <= nums[i] <= 9",
+    "every value in nums is distinct"
+  ],
+  "parameters": [
+    "nums"
+  ],
+  "functionName": "permutations",
+  "starterCode": "def permutations(nums):\n    # Return all orderings of the values, sorted ascending.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "nums": [
+          1,
+          2,
+          3
+        ]
+      },
+      "output": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          3,
+          2
+        ],
+        [
+          2,
+          1,
+          3
+        ],
+        [
+          2,
+          3,
+          1
+        ],
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          3,
+          2,
+          1
+        ]
+      ],
+      "explanation": "Three values arrange in six orders."
+    },
+    {
+      "input": {
+        "nums": [
+          8
+        ]
+      },
+      "output": [
+        [
+          8
+        ]
+      ],
+      "explanation": "One value has exactly one ordering."
+    }
+  ],
+  "hints": [
+    "Build orders position by position: at each step, any not-yet-used value may come next.",
+    "A used flag per value keeps each recursion branch from repeating a value.",
+    "When the built order reaches full length, record a copy; backtrack by unmarking and popping."
+  ],
+  "solution": "Backtracking with a used-mask: at each position try every unused value, record the order when complete, and undo. n! orderings fall out in ascending order when the values start sorted. O(n * n!) time, O(n) recursion depth.",
+  "solutionCode": "def permutations(nums):\n    values = sorted(nums)\n    result = []\n    used = [False] * len(values)\n    current = []\n    def walk():\n        if len(current) == len(values):\n            result.append(list(current))\n            return\n        for i in range(len(values)):\n            if not used[i]:\n                used[i] = True\n                current.append(values[i])\n                walk()\n                current.pop()\n                used[i] = False\n    walk()\n    return result\n",
+  "bruteForceCode": "def permutations(nums):\n    values = sorted(nums)\n    n = len(values)\n    candidates = []\n    current = [None] * n\n    def fill(position):\n        if position == n:\n            candidates.append(list(current))\n            return\n        for value in values:\n            current[position] = value\n            fill(position + 1)\n    fill(0)\n    unique = {tuple(item) for item in candidates if len(set(item)) == n}\n    return [list(item) for item in sorted(unique)]\n",
+  "failureHint": "hidden tests include one value, two values, and negative values",
+  "expectedComplexity": {
+    "time": "O(n * n!)",
+    "space": "O(n)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "failNote": "all six orderings, sorted ascending"
+      },
+      {
+        "args": [
+          [
+            8
+          ]
+        ],
+        "failNote": "one value has exactly one ordering"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            4
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            -1,
+            0,
+            5
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            3,
+            1,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            2,
+            4,
+            6,
+            8
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        ]
+      }
+    ]
+  }
+}

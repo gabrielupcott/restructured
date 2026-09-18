@@ -86,36 +86,48 @@ export function emptyProgress(): PlayerProgress {
   return { problems: {}, streak: { current: 0, longest: 0 } }
 }
 
+/**
+ * Merges parsed save data over fresh defaults so records written by older
+ * builds keep loading. Throws on input without a problems map, which lets
+ * save import tell a wrong file from an empty one; the loader catches and
+ * falls back to a fresh save.
+ */
+export function sanitizeProgress(parsed: unknown): PlayerProgress {
+  if (typeof parsed !== 'object' || parsed === null) {
+    throw new Error('save is not a progress object')
+  }
+  const candidate = parsed as Partial<PlayerProgress>
+  if (typeof candidate.problems !== 'object' || candidate.problems === null) {
+    throw new Error('save has no problems map')
+  }
+  const problems: Record<string, ProblemRecord> = {}
+  for (const [id, record] of Object.entries(candidate.problems)) {
+    if (typeof record !== 'object' || record === null) continue
+    problems[id] = {
+      ...emptyProblemRecord(),
+      ...record,
+      challenge: { ...emptyModeRecord(), ...record.challenge },
+      practice: { ...emptyModeRecord(), ...record.practice },
+    }
+  }
+  const streak = candidate.streak
+  const submissions = parseSubmissions(candidate.submissions)
+  return {
+    problems,
+    submissions,
+    streak:
+      streak && typeof streak.current === 'number' && typeof streak.longest === 'number'
+        ? streak
+        : { current: 0, longest: 0 },
+  }
+}
+
 export function loadProgress(): PlayerProgress {
   if (typeof localStorage === 'undefined') return emptyProgress()
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return emptyProgress()
-    const parsed = JSON.parse(raw) as Partial<PlayerProgress>
-    if (parsed === null || typeof parsed.problems !== 'object' || parsed.problems === null) {
-      return emptyProgress()
-    }
-    // Records merge over defaults so saves written by older builds load.
-    const problems: Record<string, ProblemRecord> = {}
-    for (const [id, record] of Object.entries(parsed.problems)) {
-      if (typeof record !== 'object' || record === null) continue
-      problems[id] = {
-        ...emptyProblemRecord(),
-        ...record,
-        challenge: { ...emptyModeRecord(), ...record.challenge },
-        practice: { ...emptyModeRecord(), ...record.practice },
-      }
-    }
-    const streak = parsed.streak
-    const submissions = parseSubmissions(parsed.submissions)
-    return {
-      problems,
-      submissions,
-      streak:
-        streak && typeof streak.current === 'number' && typeof streak.longest === 'number'
-          ? streak
-          : { current: 0, longest: 0 },
-    }
+    return sanitizeProgress(JSON.parse(raw))
   } catch {
     return emptyProgress()
   }

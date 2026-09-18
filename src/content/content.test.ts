@@ -2,10 +2,22 @@ import { describe, expect, it } from 'vitest'
 import { PROBLEMS } from './index'
 
 describe('generated problem content', () => {
-  it('ships eight problems across all four tracks', () => {
-    expect(PROBLEMS).toHaveLength(8)
+  it('ships the full 62-problem roster across all eleven tracks', () => {
+    expect(PROBLEMS).toHaveLength(62)
     expect(new Set(PROBLEMS.map((p) => p.track))).toEqual(
-      new Set(['Arrays', 'Strings', 'Hash Maps', 'Two Pointers']),
+      new Set([
+        'Arrays',
+        'Strings',
+        'Hash Maps',
+        'Two Pointers',
+        'Sliding Window',
+        'Stacks',
+        'Binary Search',
+        'Linked Lists',
+        'Trees',
+        'Graphs',
+        'Dynamic Programming',
+      ]),
     )
   })
 

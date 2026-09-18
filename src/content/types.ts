@@ -39,6 +39,12 @@ export interface ProblemDraft {
   parameters: string[]
   functionName: string
   starterCode: string
+  /**
+   * Optional prepare block for structured inputs (linked lists, trees):
+   * defines the node classes, converts the JSON args into live objects, and
+   * returns (call_args, finisher) per test. Runs outside the timed window.
+   */
+  prepareCode?: string
   examples: Example[]
   /** Ladder: conceptual, direction, pseudocode. */
   hints: string[]

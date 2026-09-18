@@ -114,8 +114,10 @@ async function runAgainst(
   py: Awaited<ReturnType<typeof loadPyodide>>,
   code: string,
   functionName: string,
+  prepareCode: string,
   tests: DraftTest[],
 ): Promise<HarnessOutcome[]> {
+  py.globals.set('__PREP_CODE', prepareCode)
   py.globals.set('__CODE', code)
   py.globals.set('__FN', functionName)
   await py.runPythonAsync('install_solution()')
@@ -226,9 +228,10 @@ async function main(): Promise<void> {
     checkOriginality(draft)
 
     const allTests = [...draft.tests.visible, ...draft.tests.hidden]
-    const optimal = await runAgainst(py, draft.solutionCode, draft.functionName, allTests)
+    const prep = draft.prepareCode ?? ''
+    const optimal = await runAgainst(py, draft.solutionCode, draft.functionName, prep, allTests)
     requireOk(draft, 'optimal', optimal)
-    const brute = await runAgainst(py, draft.bruteForceCode, draft.functionName, allTests)
+    const brute = await runAgainst(py, draft.bruteForceCode, draft.functionName, prep, allTests)
     requireOk(draft, 'brute-force', brute)
 
     optimal.forEach((outcome, i) => {

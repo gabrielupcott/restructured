@@ -1,0 +1,322 @@
+{
+  "id": "04-three-sum",
+  "title": "3Sum",
+  "track": "Two Pointers",
+  "difficulty": "medium",
+  "topics": [
+    "two-pointers",
+    "arrays"
+  ],
+  "source": "canonical 3Sum concept; description, examples, and tests re-authored",
+  "description": "The input is an array of integers nums. Return every unique triplet [a, b, c] of values from three different positions with a + b + c == 0. Each triplet must be listed in ascending order, and the list of triplets itself must be sorted in ascending order. The same triplet of values must not appear twice.",
+  "constraints": [
+    "3 <= len(nums) <= 1000",
+    "-1000 <= nums[i] <= 1000"
+  ],
+  "parameters": [
+    "nums"
+  ],
+  "functionName": "three_sum",
+  "starterCode": "def three_sum(nums):\n    # Return all unique triplets summing to 0, sorted ascending.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "nums": [
+          3,
+          0,
+          -2,
+          -1,
+          1,
+          2
+        ]
+      },
+      "output": [
+        [
+          -2,
+          -1,
+          3
+        ],
+        [
+          -2,
+          0,
+          2
+        ],
+        [
+          -1,
+          0,
+          1
+        ]
+      ],
+      "explanation": "Each triplet uses three different positions and sorts to a sum of 0."
+    },
+    {
+      "input": {
+        "nums": [
+          1,
+          2,
+          -3,
+          -4,
+          4
+        ]
+      },
+      "output": [
+        [
+          -3,
+          1,
+          2
+        ]
+      ],
+      "explanation": "The only triplet of values from three different positions that sums to 0 is -3, 1, 2."
+    }
+  ],
+  "hints": [
+    "Fix one value and the problem collapses to finding two later values with a known sum.",
+    "Sorting first groups duplicates together and lets a pair search run with two converging pointers, like Two Sum II.",
+    "After sorting: for each i (skipping repeated values), sweep left = i+1 and right = end inward, recording zero sums and skipping duplicate values on both sides."
+  ],
+  "solution": "Sort the array. For each index i, run the Two Sum II converging-pointer sweep on the suffix for target -nums[i], appending each zero sum once. Skipping duplicate values at all three positions keeps the output unique and already ascending: O(n^2) time after the O(n log n) sort, O(1) extra space besides the output.",
+  "solutionCode": "def three_sum(nums):\n    values = sorted(nums)\n    result = []\n    n = len(values)\n    for i in range(n - 2):\n        if i > 0 and values[i] == values[i - 1]:\n            continue\n        left, right = i + 1, n - 1\n        while left < right:\n            total = values[i] + values[left] + values[right]\n            if total == 0:\n                result.append([values[i], values[left], values[right]])\n                left += 1\n                right -= 1\n                while left < right and values[left] == values[left - 1]:\n                    left += 1\n                while left < right and values[right] == values[right + 1]:\n                    right -= 1\n            elif total < 0:\n                left += 1\n            else:\n                right -= 1\n    return result\n",
+  "bruteForceCode": "def three_sum(nums):\n    values = sorted(nums)\n    n = len(values)\n    found = []\n    seen = set()\n    for i in range(n):\n        for j in range(i + 1, n):\n            for k in range(j + 1, n):\n                if values[i] + values[j] + values[k] == 0:\n                    key = (values[i], values[j], values[k])\n                    if key not in seen:\n                        seen.add(key)\n                        found.append([values[i], values[j], values[k]])\n    found.sort()\n    return found\n",
+  "failureHint": "hidden tests include all-zero arrays, repeated values, and inputs with no triplet",
+  "expectedComplexity": {
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            3,
+            0,
+            -2,
+            -1,
+            1,
+            2
+          ]
+        ],
+        "failNote": "each triplet must be sorted and unique"
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            -3,
+            -4,
+            4
+          ]
+        ],
+        "failNote": "values must come from different positions"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            -3
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            -2,
+            0,
+            1,
+            1,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            5,
+            -5,
+            -6,
+            6,
+            0
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            -10,
+            -490,
+            -333,
+            -305,
+            861,
+            822,
+            -449,
+            358,
+            691,
+            413,
+            239,
+            836,
+            70,
+            -858,
+            406,
+            612,
+            -382,
+            -335,
+            -461,
+            -2,
+            -416,
+            -6,
+            -168,
+            790,
+            -989,
+            -62,
+            248,
+            146,
+            -933,
+            29,
+            578,
+            875,
+            412,
+            524,
+            444,
+            649,
+            -183,
+            -766,
+            363,
+            944,
+            318,
+            311,
+            -270,
+            969,
+            -331,
+            420,
+            144,
+            -493,
+            452,
+            432,
+            -498,
+            -675,
+            -868,
+            267,
+            -348,
+            11,
+            909,
+            721,
+            -738,
+            164,
+            498,
+            -309,
+            -308,
+            426,
+            540,
+            187,
+            12,
+            95,
+            -499,
+            -145,
+            948,
+            511,
+            742,
+            702,
+            297,
+            -6,
+            -946,
+            -858,
+            945,
+            41,
+            179,
+            901,
+            -23,
+            533,
+            -39,
+            812,
+            -110,
+            903,
+            -130,
+            -555,
+            669,
+            -337,
+            173,
+            413,
+            138,
+            853,
+            401,
+            772,
+            265,
+            -110,
+            617,
+            -771,
+            -531,
+            -970,
+            -905,
+            136,
+            -428,
+            -597,
+            125,
+            456,
+            29,
+            200,
+            -316,
+            -555,
+            -29,
+            -569,
+            435,
+            -949,
+            -139,
+            285,
+            -780,
+            -127,
+            -888,
+            971,
+            -330,
+            -346,
+            905,
+            927,
+            -931,
+            20,
+            -580,
+            437,
+            -101,
+            586,
+            -372,
+            -705,
+            208,
+            234,
+            847,
+            -297,
+            -79,
+            -663,
+            207,
+            -294,
+            -184,
+            842,
+            747,
+            190,
+            -909,
+            -227
+          ]
+        ]
+      }
+    ]
+  }
+}

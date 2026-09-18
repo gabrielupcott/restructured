@@ -47,6 +47,20 @@
   --color-track-hashmaps-deep: color-mix(in srgb, #55ffff 55%, var(--color-dos-bg));
   --color-track-twopointers: color-mix(in srgb, #ff55ff 80%, var(--color-dos-text));
   --color-track-twopointers-deep: color-mix(in srgb, #ff55ff 55%, var(--color-dos-bg));
+  --color-track-slidingwindow: color-mix(in srgb, #ff5555 80%, var(--color-dos-text));
+  --color-track-slidingwindow-deep: color-mix(in srgb, #ff5555 55%, var(--color-dos-bg));
+  --color-track-stacks: color-mix(in srgb, #ffff55 80%, var(--color-dos-text));
+  --color-track-stacks-deep: color-mix(in srgb, #ffff55 55%, var(--color-dos-bg));
+  --color-track-binarysearch: color-mix(in srgb, #5555ff 80%, var(--color-dos-text));
+  --color-track-binarysearch-deep: color-mix(in srgb, #5555ff 55%, var(--color-dos-bg));
+  --color-track-linkedlists: color-mix(in srgb, #aaaaaa 80%, var(--color-dos-text));
+  --color-track-linkedlists-deep: color-mix(in srgb, #aaaaaa 55%, var(--color-dos-bg));
+  --color-track-trees: color-mix(in srgb, #aaff55 80%, var(--color-dos-text));
+  --color-track-trees-deep: color-mix(in srgb, #aaff55 55%, var(--color-dos-bg));
+  --color-track-dp: color-mix(in srgb, #ff55aa 80%, var(--color-dos-text));
+  --color-track-dp-deep: color-mix(in srgb, #ff55aa 55%, var(--color-dos-bg));
+  --color-track-graphs: color-mix(in srgb, #aa55ff 80%, var(--color-dos-text));
+  --color-track-graphs-deep: color-mix(in srgb, #aa55ff 55%, var(--color-dos-bg));
 }
 
 body {

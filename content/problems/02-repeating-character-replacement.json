@@ -1,0 +1,110 @@
+{
+  "id": "02-repeating-character-replacement",
+  "title": "Longest Repeating Character Replacement",
+  "track": "Sliding Window",
+  "difficulty": "medium",
+  "topics": [
+    "sliding-window",
+    "strings"
+  ],
+  "source": "canonical Longest Repeating Character Replacement concept; description, examples, and tests re-authored",
+  "description": "The input is a string s of uppercase letters and an integer k. You may change at most k characters of s to any letter. Return the length of the longest single-letter run that can exist after those changes.",
+  "constraints": [
+    "1 <= len(s) <= 10000",
+    "0 <= k < len(s)",
+    "s consists of uppercase letters"
+  ],
+  "parameters": [
+    "s",
+    "k"
+  ],
+  "functionName": "character_replacement",
+  "starterCode": "def character_replacement(s, k):\n    # Return the longest same-letter run reachable with at most k changes.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "s": "ABAB",
+        "k": 2
+      },
+      "output": 4,
+      "explanation": "Changing both B characters (or both A characters) turns the whole string into one letter."
+    },
+    {
+      "input": {
+        "s": "AAAA",
+        "k": 0
+      },
+      "output": 4,
+      "explanation": "With no changes allowed the existing run of four A characters is the answer."
+    }
+  ],
+  "hints": [
+    "A window can become one repeated letter when window length minus the count of its most common character is at most k.",
+    "When a window stops being fixable, shrinking from the left restores feasibility; the window never needs to grow past its best size.",
+    "Sweep right, counting letters in the window. While (window length - max count) > k, advance left. Track the largest valid window length."
+  ],
+  "solution": "Sliding window over s with a frequency count. A window is fixable when its length minus its most common character count is at most k; otherwise slide the left edge forward. Because the window only ever grows or slides, one pass suffices: O(n) time with O(26) counts, so O(n) time and O(1) space.",
+  "solutionCode": "def character_replacement(s, k):\n    counts = {}\n    best = 0\n    top = 0\n    left = 0\n    for right, ch in enumerate(s):\n        counts[ch] = counts.get(ch, 0) + 1\n        if counts[ch] > top:\n            top = counts[ch]\n        while right - left + 1 - top > k:\n            counts[s[left]] -= 1\n            left += 1\n        if right - left + 1 > best:\n            best = right - left + 1\n    return best\n",
+  "bruteForceCode": "def character_replacement(s, k):\n    best = 0\n    for i in range(len(s)):\n        counts = {}\n        for j in range(i, len(s)):\n            counts[s[j]] = counts.get(s[j], 0) + 1\n            top = max(counts.values())\n            if j - i + 1 - top <= k and j - i + 1 > best:\n                best = j - i + 1\n    return best\n",
+  "failureHint": "hidden tests include k = 0, all-distinct letters, and long runs already in place",
+  "expectedComplexity": {
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          "ABAB",
+          2
+        ],
+        "failNote": "changes may target any letter, not just the majority"
+      },
+      {
+        "args": [
+          "AAAA",
+          0
+        ],
+        "failNote": "with k = 0 the existing runs decide"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          "AABABBA",
+          1
+        ]
+      },
+      {
+        "args": [
+          "B",
+          2
+        ]
+      },
+      {
+        "args": [
+          "ABCDE",
+          1
+        ]
+      },
+      {
+        "args": [
+          "AABBBCC",
+          2
+        ]
+      },
+      {
+        "args": [
+          "ABBB",
+          2
+        ]
+      },
+      {
+        "args": [
+          "BHGCDCAFGFFAEGFFCAADFHCFDCBEAAFAFCAFCFBDGDFHFHEFBGFBCBGBDFEEDHDCBFACBDABAFACGBEBDAGGFDBCGHBCBDGFHHAFHDABHGHGGDEGECBHGAAHEBBGECFFCFFEABCACDFEGEHAHBCHCHHDCBAGDFAACEHHFDCBABDEECFFFACHGAFFFCFEGFFBCHHBBAFHGCCEADFHHCCBHACHADDHCFEBCCFDGDDHBGADAGDHCHFGEHFGGAEFBBBDDAAGFGFHGBDCADEDAEFBCHHHGCDEHCGGGFCGGAGFBCEBEDHGGHBCCFEGDABEDGDEBFCEDFGAHBDGADGCDHHGECCCBHFAFE",
+          75
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "id": "02-longest-common-prefix",
+  "title": "Longest Common Prefix",
+  "track": "Strings",
+  "difficulty": "easy",
+  "topics": [
+    "strings"
+  ],
+  "source": "canonical Longest Common Prefix concept; description, examples, and tests re-authored",
+  "description": "The input is an array of lowercase strings. Return the longest string that every word in the array starts with. The answer may be the empty string when the words share nothing.",
+  "constraints": [
+    "1 <= len(words) <= 200",
+    "1 <= len(words[i]) <= 500",
+    "words[i] consists of lowercase letters"
+  ],
+  "parameters": [
+    "words"
+  ],
+  "functionName": "longest_common_prefix",
+  "starterCode": "def longest_common_prefix(words):\n    # Return the longest string every word starts with.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "words": [
+          "interstellar",
+          "interior",
+          "interval"
+        ]
+      },
+      "output": "inter",
+      "explanation": "All three words start with \"inter\"; the next character already differs."
+    },
+    {
+      "input": {
+        "words": [
+          "sunny",
+          "rain",
+          "cloud"
+        ]
+      },
+      "output": "",
+      "explanation": "The first characters already disagree, so the common prefix is empty."
+    }
+  ],
+  "hints": [
+    "Compare the words position by position: column 0 of every word, then column 1, and so on.",
+    "The scan can stop at the first column where any word disagrees, or when the shortest word runs out.",
+    "Take words[0] as the reference. For each index i up to its length, check words[j][i] == words[0][i] for every j; the first failure fixes the answer as words[0][:i]."
+  ],
+  "solution": "Vertical scan: compare character column by column across all words, stopping at the first mismatch or at the end of the shortest word. Work never exceeds the answer length times the word count: O(S) time where S is the number of characters examined, O(1) extra space.",
+  "solutionCode": "def longest_common_prefix(words):\n    for i in range(len(words[0])):\n        ch = words[0][i]\n        for word in words[1:]:\n            if i >= len(word) or word[i] != ch:\n                return words[0][:i]\n    return words[0]\n",
+  "bruteForceCode": "def longest_common_prefix(words):\n    first = words[0]\n    best = \"\"\n    for length in range(1, len(first) + 1):\n        candidate = first[:length]\n        ok = True\n        for word in words[1:]:\n            if len(word) < length:\n                ok = False\n                break\n            for i in range(length):\n                if word[i] != candidate[i]:\n                    ok = False\n                    break\n            if not ok:\n                break\n        if ok:\n            best = candidate\n        else:\n            break\n    return best\n",
+  "failureHint": "hidden tests include one word, identical words, an immediate mismatch, and long shared prefixes",
+  "expectedComplexity": {
+    "time": "O(S)",
+    "space": "O(1)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            "interstellar",
+            "interior",
+            "interval"
+          ]
+        ],
+        "failNote": "stop at the first column where any word disagrees"
+      },
+      {
+        "args": [
+          [
+            "sunny",
+            "rain",
+            "cloud"
+          ]
+        ],
+        "failNote": "the common prefix can be empty"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            "a"
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            "ab",
+            "a"
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            "same",
+            "same",
+            "same"
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            "abc",
+            "abd",
+            "efg"
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            "brick",
+            "bridge",
+            "broom"
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            "xyz",
+            "xyz"
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            "solo"
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababedpodcokgioeimhomfmhndpicmgncfmifcggjhokndgifdonfnddjkdochpefogdgilcpgipigkhlfjpjklkoejngelkfpjlpcnm",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababpjknihgfeekoefidohhjfcpmkkigkfdomeegemeehpieenlpijpekhpmmjehllpjjhhchfofkfgidknomgfemdhpcljdmkmehokd",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababgndnofgfdmjpdlodgphodclicdncdjpcoemelehglcodfdhkdffemcnpfcljechekgchnmncjhjlhhghehenfjelkppgcdkjjlke",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababghjccflfddkclnhkglldfmcgkmegfjhfhejhdjkmcijkfnieocjdfdffiddldlppdoglpmihkheigodfmmipgenlnoheofkcjnlf",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababmdhgolpmcffmhhhgmdppgkdghoiojgneemieljimpcgpmooogiopkknjlnienemgjfpclefkfjhelonlflcgmllifjlcliplocdh",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababdiphkgdodlkfcedpjjcdepglmnehhecneicemlmglgononkfefkencgcglongfdpidoceihjmdncefpnpcnefkfkgnlmeoenmkid",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababnljndpldnofelplfecldjgiifmjmnijpoillnnogijhmfkjjhcolfjcnmooekeekgeoielpnojghldedcgjpplfikmhhgmnmglef",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababpdepikpcefcpnmhjcknikdlffkcgdehnkkohgmjmlfcdempkjelnolemfpcekjojknkkicfoehggghkfddmclcjfdpiofencggpg",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababgdclheongegeoijohogdpfjfjjiepjicocjomfijncpjookefikcmemhlngfmfhkejhcgioelgnchfdjhodcihlejjdiecgfhooh",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababcccmpnoffeegpempejinlgjicdfpidohiggelkhkkpmndhdnncendpnoghogeckekenlnjgpoighiekmghdemdcilmfpemmfgeoj",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababdhjmggjiomhpplopkpiklglinfcidlpihfpincnhdcldlhledgkgkkfdnjckkihcpjmipckmdjckokpnnhiilegmcgihpoljonml",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababchhcpcoikghhmcpjjfpijmihfjglclnognkfpnodjggdlccnjojilhchmnmgipmddmhfhhlljnmekoclemomfkefkcjjeinlpopp",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababplfggocfenggpnklhlepckpiemfffecflpjmhnonokiicifdiloegogclmekpcommdhfnfffhikmkdnldehniekcmcenpcoehddi",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababidmcdjhjnoonegjimmcephjgfplgggcgmgifkkklcloiichoeockfgngglocppehcookkkjicgfjefgkdgmhndnjhlljolgmmiii",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababegeeecjolnhdjpihihjlkjdldjcghlilpdpmepjnglpjdeipggingfndemmgifphddjhdmegnhondimcpjfpfgenmglehponemdm",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababfegccdgmkkcpmeiignpojpcncoieheieinjcpljggfkcdopfenpdigllnojjkjkhcpjhgkdfnihlkkmhekonhllcgnfkjhfheoie",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababknlpnfcmdnkjcokcikklnhdcfgjcocmpjcjfpnihppcndgpmmhjcjonmojigcgfljjkkmgemmopjmcmopnmcmlcignfdlicloldf",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababkglipllpkgnidipiglfmjnmjomhhmnmckidpdhclghfncjjijonmdjklgcnjfckgeckgdmcgojmkgelfgijeegkficficcpedflk",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababfmnpkplnfkkiecphcjpjiolgllnfgjgfgfonnnmlkpddkimljeghpmnmgjepcijemdicccoeplhdlhncemnecilogigjhjohgpdm",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababgkpdchlgmgeofmlmiefnnnfdcndmocidecnnjhepfmlclohpkhdidemkmopignmpdknkokilimmnoipknpijjchlffpdomoofnfe",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababmmhpncjhkflnhcngcfojgecoghdkdlkcdcgogkongmnpkoojiknhhnchkohopipjmccoomjdccohdccnfeeejplimhhfkmnnfedl",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababfogncjjejogjpljjmkciimlnoimldgijcjnhglcffnkjjgcipmeidcphhlphgldoilpchmiljmlkjnepneeefgepigdgcmfkdgch",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababjomfodkegmkcnfijklgnmmcoioijhdnemfojjkjodjmphphokcmkjkjfdhpldcfkgcjfkeokpggidkjcegcfldkncehdofkkoofc",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababelmnpfjhdgfhmocikpedcihfkfojnojjmcfdjjiknekfnhcmplmckijnlmlcmnnekfmhhkdnnhmkjeifdejffggipcomjiggjmcj",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababmkgghgkkjpkkghlffjiklemeffggpcfmdngmcpnkcoonfkjgccheenhkmggjihcjnkmejjepcenpnjpllfhpkhjefoccjcodhkml",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababeljcnjnmkpnmcmcedodpjmmhnfdngikijigdnnkfgdppndoemohcliceoidkifpconifogeljgodkfndghldenhdpimocomhkpnf",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababedgmoikcddcfhlefnjcchmgjcdpffofmigpglpclenhjhdjmgljommfohmgnomjhdkimgpccffnffpdhemigincnefnjenglmiog",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababddkhkgjkheikfelfemdpfcfhnnmocchgljjgcipccgmmkppiiclpkfpikhonehnioihleglkhlkknocononikiihlncmiildkifl",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababilpdigmmikleokjnnicnnchofggpimofldgkfhhpofendjmppngipjmdohhjjcoginnkhdmeielloljnhjockhfndcknjjngnmhl",
+            "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababfphlhkcgngkpngcicnefcnegpdfgpocpmhjfmpmiilljijlknilmlmcelopgopodjjfgpipehmclfjhcmfflcemknfihjmomeljp"
+          ]
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "id": "07-longest-increasing-subsequence",
+  "title": "Longest Increasing Subsequence",
+  "track": "Dynamic Programming",
+  "difficulty": "medium",
+  "topics": [
+    "dynamic-programming",
+    "arrays"
+  ],
+  "source": "canonical Longest Increasing Subsequence concept; description, examples, and tests re-authored",
+  "description": "The input is an array of integers. Return the length of the longest strictly increasing subsequence: values picked left to right, each strictly larger than the one before, not necessarily adjacent.",
+  "constraints": [
+    "1 <= len(nums) <= 5000",
+    "-10000 <= nums[i] <= 10000"
+  ],
+  "parameters": [
+    "nums"
+  ],
+  "functionName": "lis_length",
+  "starterCode": "def lis_length(nums):\n    # Return the length of the longest strictly increasing subsequence.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "nums": [
+          4,
+          10,
+          2,
+          8,
+          9
+        ]
+      },
+      "output": 3,
+      "explanation": "Either 4, 8, 9 or 2, 8, 9 gives length 3."
+    },
+    {
+      "input": {
+        "nums": [
+          9,
+          1,
+          8,
+          2,
+          7
+        ]
+      },
+      "output": 3,
+      "explanation": "1, 2, 7 is the longest increasing chain."
+    }
+  ],
+  "hints": [
+    "Track, for each value, the longest chain ending exactly there.",
+    "A cheaper trick keeps one sorted list: the smallest tail value of an increasing chain of every length.",
+    "For each value, binary search that tail list for the first entry not smaller than it and replace it; append when the value extends the longest chain. The list length is the answer."
+  ],
+  "solution": "Patience method: keep a sorted list of the smallest tail of an increasing chain of each length; place each value with a binary search (replace the first larger tail, or append). O(n log n) time, O(n) space.",
+  "solutionCode": "import bisect\n\ndef lis_length(nums):\n    tails = []\n    for value in nums:\n        pos = bisect.bisect_left(tails, value)\n        if pos == len(tails):\n            tails.append(value)\n        else:\n            tails[pos] = value\n    return len(tails)\n",
+  "bruteForceCode": "def lis_length(nums):\n    def best(i):\n        top = 1\n        for j in range(i + 1, len(nums)):\n            if nums[j] > nums[i]:\n                length = 1 + best(j)\n                if length > top:\n                    top = length\n        return top\n    return max((best(i) for i in range(len(nums))), default=0)\n",
+  "failureHint": "hidden tests include duplicates, strictly falling arrays, and an already rising array",
+  "expectedComplexity": {
+    "time": "O(n log n)",
+    "space": "O(n)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            4,
+            10,
+            2,
+            8,
+            9
+          ]
+        ],
+        "failNote": "picked values must strictly increase"
+      },
+      {
+        "args": [
+          [
+            9,
+            1,
+            8,
+            2,
+            7
+          ]
+        ],
+        "failNote": "later, smaller values can still extend a chain"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            1
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            2,
+            2,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            3,
+            1,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            3,
+            2,
+            4
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            5,
+            4,
+            3,
+            2,
+            1
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ]
+        ]
+      }
+    ]
+  }
+}

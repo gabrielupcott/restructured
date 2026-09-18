@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import CodeEditor from '../components/CodeEditor'
 import type { Problem, TestCase } from '../content/types'
 import type { LintDiagnostic } from '../execution/protocol'
@@ -15,6 +15,7 @@ import { useStopwatch } from '../game/useStopwatch'
 import { computeXp } from '../game/xp'
 import { formatClock, formatMs, formatStamp } from '../lib/format'
 import PalettePicker from '../components/PalettePicker'
+import ResizeHandle from '../components/ResizeHandle'
 import SoundToggle from '../components/SoundToggle'
 import { smallestFailingIndex } from '../results/reveal'
 import QuizPanel from './QuizPanel'
@@ -138,13 +139,11 @@ export default function ProblemScreen({
 }: ProblemScreenProps) {
   const [code, setCode] = useState(problem.starterCode)
   const [running, setRunning] = useState(false)
-  const [status, setStatus] = useState<string | null>(null)
   const [scope, setScope] = useState<Scope | null>(null)
   const [visibleOutcomes, setVisibleOutcomes] = useState<(TestOutcome | null)[]>([])
   const [hiddenOutcomes, setHiddenOutcomes] = useState<(TestOutcome | null)[]>([])
   const [compileError, setCompileError] = useState<string | null>(null)
   const [sandboxResets, setSandboxResets] = useState(0)
-  const [stopped, setStopped] = useState(false)
   const [lintDiagnostics, setLintDiagnostics] = useState<LintDiagnostic[]>([])
   const [phase, setPhase] = useState<Phase>('coding')
   const [hintsRevealed, setHintsRevealed] = useState(0)
@@ -153,11 +152,25 @@ export default function ProblemScreen({
   const [solve, setSolve] = useState<SolveResult | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [expandedSubmission, setExpandedSubmission] = useState<number | null>(null)
+  const [asidePct, setAsidePct] = useState(50)
+  const [resultsHeight, setResultsHeight] = useState<number | null>(null)
   const clock = useStopwatch()
   const overtimeAnnounced = useRef(false)
+  const gridRef = useRef<HTMLDivElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
 
   // Boot the shared runtime as soon as the screen opens so lint and runs are
-  // ready by the time the player finishes reading.
+  // ready by the time the player finishes reading. Failures stay silent:
+  // they resurface on the first real run, where they have proper UI.
+  useEffect(() => {
+    getSharedRunner().prewarm({
+      code: problem.starterCode,
+      functionName: problem.functionName,
+      prepareCode: problem.prepareCode,
+      tests: [],
+    })
+  }, [problem])
+
   useEffect(() => {
     getSharedRunner()
   }, [])
@@ -234,7 +247,6 @@ export default function ProblemScreen({
     setRunning(true)
     setScope(nextScope)
     setCompileError(null)
-    setStopped(false)
     setLintDiagnostics([])
     play('run-start')
     // Keep the previous run's results on screen while the new one executes:
@@ -254,7 +266,6 @@ export default function ProblemScreen({
     if (nextScope === 'all') onAttempt(problem.id, mode)
 
     const handlers: RunHandlers = {
-      onStatus: setStatus,
       onCompileError: setCompileError,
       onTestResult: (index, outcome) => {
         collected.push(outcome)
@@ -267,10 +278,9 @@ export default function ProblemScreen({
       },
     }
     try {
-      const result = await getSharedRunner().runTests({ code, functionName: problem.functionName, tests }, handlers)
+      const result = await getSharedRunner().runTests({ code, functionName: problem.functionName, prepareCode: problem.prepareCode, tests }, handlers)
       console.log(`[execute] done at ${performance.now().toFixed(0)}ms`, result)
       if (result.sandboxResets > 0) setSandboxResets((prev) => prev + result.sandboxResets)
-      if (result.stopped) setStopped(true)
       if (nextScope === 'all' && !result.stopped) {
         const allPassed =
           collected.length === tests.length && collected.every((o) => o?.status === 'pass')
@@ -295,30 +305,25 @@ export default function ProblemScreen({
       }
     } finally {
       setRunning(false)
-      setStatus(null)
     }
   }
 
-  const visiblePassed = visibleOutcomes.filter((o) => o?.status === 'pass').length
+  function resizeAside(delta: number) {
+    const width = gridRef.current?.offsetWidth ?? 0
+    if (width === 0) return
+    setAsidePct((pct) => Math.min(80, Math.max(20, pct + (delta / width) * 100)))
+  }
+
+  function resizeResults(delta: number) {
+    setResultsHeight((height) => {
+      const base = height ?? resultsRef.current?.offsetHeight ?? 224
+      return Math.min(Math.round(window.innerHeight * 0.6), Math.max(48, base - delta))
+    })
+  }
+
   const hiddenPassed = hiddenOutcomes.filter((o) => o?.status === 'pass').length
   const hiddenFailed = hiddenOutcomes.filter((o) => o && o.status !== 'pass').length
-  const allPassed =
-    scope === 'all' &&
-    visibleOutcomes.every((o) => o?.status === 'pass') &&
-    hiddenOutcomes.every((o) => o?.status === 'pass')
   const revealIndex = failedSubmits >= 3 ? smallestFailingIndex(problem.tests.hidden, hiddenOutcomes) : -1
-
-  let summary = 'IDLE'
-  if (running && status) summary = status.toUpperCase()
-  else if (compileError) summary = 'INSTALL FAILED'
-  else if (stopped) summary = 'STOPPED'
-  else if (scope === 'all') {
-    summary = allPassed
-      ? `ALL TESTS PASSED (${visiblePassed + hiddenPassed}/${visibleOutcomes.length + hiddenOutcomes.length})`
-      : `SUBMIT: ${visiblePassed + hiddenPassed}/${visibleOutcomes.length + hiddenOutcomes.length} PASSED`
-  } else if (scope === 'visible') {
-    summary = `VISIBLE: ${visiblePassed}/${visibleOutcomes.length} PASSED`
-  }
 
   const overtime = mode === 'challenge' && clock.elapsedSec >= problem.parTimeSec
   const identity = trackIdentity(problem.track)
@@ -363,8 +368,12 @@ export default function ProblemScreen({
         <PalettePicker />
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2 md:grid-rows-1">
-        <aside className="max-h-[35vh] min-h-0 overflow-y-auto border-b-2 border-dos-faint p-4 text-sm leading-relaxed md:max-h-none md:border-b-0 md:border-r-2">
+      <div
+        ref={gridRef}
+        className="grid min-h-0 flex-1 grid-cols-1 md:grid-rows-1 md:[grid-template-columns:var(--split)_6px_1fr]"
+        style={{ '--split': `${asidePct}%` } as CSSProperties}
+      >
+        <aside className="max-h-[35vh] min-h-0 overflow-y-auto border-b-2 border-dos-faint p-4 text-sm leading-relaxed md:max-h-none md:border-b-0">
           {phase === 'quiz' && pendingAccept ? (
             <QuizPanel
               problem={problem}
@@ -402,7 +411,7 @@ export default function ProblemScreen({
             ))}
           </ul>
 
-          <h2 className={`mt-6 text-xs tracking-widest ${identity.textClass}`}>INTEL</h2>
+          <h2 className={`mt-6 text-xs tracking-widest ${identity.textClass}`}>HINTS</h2>
           <p className="mt-1 text-xs text-dos-faint">
             Each hint cuts XP by 20%. The full solution locks in 10%.
           </p>
@@ -513,9 +522,16 @@ export default function ProblemScreen({
           )}
         </aside>
 
+        <ResizeHandle
+          axis="x"
+          label="Resize briefing and editor"
+          onResize={resizeAside}
+          className="hidden w-1.5 cursor-col-resize bg-dos-faint hover:bg-dos-cyan md:block"
+        />
+
         <section className="flex min-h-0 flex-col">
           <div className="flex items-center gap-3 border-b border-dos-faint px-3 py-1 text-xs text-dos-faint">
-            <span>function {problem.functionName}()</span>
+            <span>CODE EDITOR</span>
             <button
               onClick={() => setCode(problem.starterCode)}
               className="ml-auto border border-dos-faint px-2 py-0.5 hover:border-dos-text hover:text-dos-text"
@@ -540,14 +556,23 @@ export default function ProblemScreen({
             ■ SANDBOX RESET: a test hung past the wall clock and the worker was reloaded
           </div>
         )}
-        <div className="min-h-[6.5rem] max-h-56 overflow-y-auto px-3 py-2 text-xs">
-          {scope === null && (
-            <div className="text-dos-faint">
-              RUN executes the visible tests. SUBMIT runs every test, including hidden ones.
-            </div>
-          )}
-          {visibleOutcomes.length > 0 && (
-            <>
+        {visibleOutcomes.length > 0 && (
+          <>
+            <ResizeHandle
+              axis="y"
+              label="Resize test results"
+              onResize={resizeResults}
+              className="h-1.5 cursor-row-resize bg-dos-faint hover:bg-dos-cyan"
+            />
+            <div
+              ref={resultsRef}
+              className={
+                resultsHeight === null
+                  ? 'max-h-56 overflow-y-auto px-3 py-2 text-xs'
+                  : 'overflow-y-auto px-3 py-2 text-xs'
+              }
+              style={resultsHeight === null ? undefined : { height: resultsHeight }}
+            >
               <div className="mt-1 tracking-widest text-dos-cyan">VISIBLE TESTS</div>
               {problem.tests.visible.map((test, i) => (
                 <TestRow
@@ -558,37 +583,36 @@ export default function ProblemScreen({
                   problem={problem}
                 />
               ))}
-            </>
-          )}
-          {scope === 'all' && hiddenOutcomes.length > 0 && (
-            <>
-              <div className="mt-3 tracking-widest text-dos-cyan">
-                HIDDEN TESTS: {hiddenPassed}/{hiddenOutcomes.length} PASSED
-              </div>
-              {hiddenFailed > 0 && (
-                <div className="py-2 text-dos-yellow">
-                  {hiddenFailed} of {hiddenOutcomes.length} hidden tests failed.{' '}
-                  {problem.failureHint}
-                </div>
-              )}
-              {revealIndex >= 0 && (
-                <div>
-                  <div className="py-1 text-dos-magenta">
-                    REVEAL (failed submissions: {failedSubmits}): smallest failing hidden test
+              {scope === 'all' && hiddenOutcomes.length > 0 && (
+                <>
+                  <div className="mt-3 tracking-widest text-dos-cyan">
+                    HIDDEN TESTS: {hiddenPassed}/{hiddenOutcomes.length} PASSED
                   </div>
-                  <TestRow
-                    title={`HIDDEN ${revealIndex + 1}`}
-                    test={problem.tests.hidden[revealIndex]}
-                    outcome={hiddenOutcomes[revealIndex] ?? null}
-                    problem={problem}
-                  />
-                </div>
+                  {hiddenFailed > 0 && (
+                    <div className="py-2 text-dos-yellow">
+                      {hiddenFailed} of {hiddenOutcomes.length} hidden tests failed.{' '}
+                      {problem.failureHint}
+                    </div>
+                  )}
+                  {revealIndex >= 0 && (
+                    <div>
+                      <div className="py-1 text-dos-magenta">
+                        REVEAL (failed submissions: {failedSubmits}): smallest failing hidden test
+                      </div>
+                      <TestRow
+                        title={`HIDDEN ${revealIndex + 1}`}
+                        test={problem.tests.hidden[revealIndex]}
+                        outcome={hiddenOutcomes[revealIndex] ?? null}
+                        problem={problem}
+                      />
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-3 border-t-2 border-dos-text px-3 py-2">
-          <div className="flex-1 text-xs text-dos-dim">{summary}</div>
+            </div>
+          </>
+        )}
+        <div className="flex items-center justify-end gap-3 border-t-2 border-dos-text px-3 py-2">
           <button
             onClick={() => execute('visible')}
             disabled={running || phase !== 'coding'}

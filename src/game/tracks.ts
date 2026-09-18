@@ -5,8 +5,18 @@ export interface TrackGroup {
   problems: Problem[]
 }
 
-/** Tracks planned for Phase 4, shown on the map as coming-soon nodes. */
-export const UPCOMING_TRACKS = [
+/**
+ * Tracks planned for Phase 4 but not yet shipped, shown as coming-soon
+ * nodes. Empty since Batch 4: the planned curriculum is fully shipped.
+ */
+export const UPCOMING_TRACKS: string[] = []
+
+/** Map chain order: the suggested curriculum. Later tracks unlock as content ships. */
+const MAP_ORDER = [
+  'Arrays',
+  'Strings',
+  'Hash Maps',
+  'Two Pointers',
   'Sliding Window',
   'Stacks',
   'Binary Search',
@@ -15,9 +25,6 @@ export const UPCOMING_TRACKS = [
   'Graphs',
   'Dynamic Programming',
 ]
-
-/** Map chain order: the suggested curriculum for existing content. */
-const MAP_ORDER = ['Arrays', 'Strings', 'Hash Maps', 'Two Pointers']
 
 function mapRank(name: string): number {
   const index = MAP_ORDER.indexOf(name)
@@ -75,6 +82,69 @@ const IDENTITIES: Record<string, TrackIdentity> = {
     hoverBorderClass: 'hover:border-track-twopointers',
 
     deepTextClass: 'text-track-twopointers-deep',
+  },
+  'Sliding Window': {
+    motif: '[<>]',
+    textClass: 'text-track-slidingwindow',
+    borderClass: 'border-track-slidingwindow',
+    bgClass: 'bg-track-slidingwindow',
+    hoverBorderClass: 'hover:border-track-slidingwindow',
+
+    deepTextClass: 'text-track-slidingwindow-deep',
+  },
+  Stacks: {
+    motif: '[||]',
+    textClass: 'text-track-stacks',
+    borderClass: 'border-track-stacks',
+    bgClass: 'bg-track-stacks',
+    hoverBorderClass: 'hover:border-track-stacks',
+
+    deepTextClass: 'text-track-stacks-deep',
+  },
+  'Binary Search': {
+    motif: '[1|0]',
+    textClass: 'text-track-binarysearch',
+    borderClass: 'border-track-binarysearch',
+    bgClass: 'bg-track-binarysearch',
+    hoverBorderClass: 'hover:border-track-binarysearch',
+
+    deepTextClass: 'text-track-binarysearch-deep',
+  },
+  'Linked Lists': {
+    motif: '[o->]',
+    textClass: 'text-track-linkedlists',
+    borderClass: 'border-track-linkedlists',
+    bgClass: 'bg-track-linkedlists',
+    hoverBorderClass: 'hover:border-track-linkedlists',
+
+    deepTextClass: 'text-track-linkedlists-deep',
+  },
+  Trees: {
+    motif: '[/\\]',
+    textClass: 'text-track-trees',
+    borderClass: 'border-track-trees',
+    bgClass: 'bg-track-trees',
+    hoverBorderClass: 'hover:border-track-trees',
+
+    deepTextClass: 'text-track-trees-deep',
+  },
+  'Dynamic Programming': {
+    motif: '[::]',
+    textClass: 'text-track-dp',
+    borderClass: 'border-track-dp',
+    bgClass: 'bg-track-dp',
+    hoverBorderClass: 'hover:border-track-dp',
+
+    deepTextClass: 'text-track-dp-deep',
+  },
+  Graphs: {
+    motif: '[o:o]',
+    textClass: 'text-track-graphs',
+    borderClass: 'border-track-graphs',
+    bgClass: 'bg-track-graphs',
+    hoverBorderClass: 'hover:border-track-graphs',
+
+    deepTextClass: 'text-track-graphs-deep',
   },
 }
 

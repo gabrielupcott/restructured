@@ -1,0 +1,134 @@
+{
+  "id": "08-burst-balloons",
+  "title": "Burst Balloons",
+  "track": "Dynamic Programming",
+  "difficulty": "hard",
+  "topics": [
+    "dynamic-programming",
+    "intervals"
+  ],
+  "source": "canonical Burst Balloons concept; description, examples, and tests re-authored",
+  "description": "The input is an array of positive integers, one balloon per position. Bursting the balloon at position i scores the product of its value with the values of the balloons still standing immediately to its left and right; after neighbors burst, the ends count as value 1. Burst every balloon and return the largest total score possible by choosing the order well.",
+  "constraints": [
+    "1 <= len(nums) <= 8",
+    "1 <= nums[i] <= 100"
+  ],
+  "parameters": [
+    "nums"
+  ],
+  "functionName": "max_coins",
+  "starterCode": "def max_coins(nums):\n    # Return the largest total score for bursting every balloon.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "nums": [
+          2,
+          4
+        ]
+      },
+      "output": 12,
+      "explanation": "Burst 2 first for 1 x 2 x 4 = 8, then 4 alone for 1 x 4 x 1 = 4."
+    },
+    {
+      "input": {
+        "nums": [
+          7
+        ]
+      },
+      "output": 7,
+      "explanation": "A single balloon scores its own value against the two virtual ends."
+    }
+  ],
+  "hints": [
+    "Think about the LAST balloon burst in a range, not the first: when it bursts, its two sides no longer interact.",
+    "Add a virtual 1 at each end. For an open range between positions left and right, try every interior balloon as the last one burst.",
+    "Table over ranges: best(left, right) = max over k inside of best(left, k) + best(k, right) + values[left] * values[k] * values[right]."
+  ],
+  "solution": "Interval DP with virtual ends: for every open range, the last balloon burst inside it splits the problem in two independent sides, so try each interior balloon as the last and take the best. O(n^3) time, O(n^2) space.",
+  "solutionCode": "def max_coins(nums):\n    values = [1] + list(nums) + [1]\n    n = len(values)\n    table = [[0] * n for _ in range(n)]\n    for width in range(2, n):\n        for left in range(0, n - width):\n            right = left + width\n            best = 0\n            for k in range(left + 1, right):\n                score = table[left][k] + table[k][right] + values[left] * values[k] * values[right]\n                if score > best:\n                    best = score\n            table[left][right] = best\n    return table[0][n - 1]\n",
+  "bruteForceCode": "def max_coins(nums):\n    def burst(standing):\n        if not standing:\n            return 0\n        best = 0\n        for k in range(len(standing)):\n            left = standing[k - 1] if k > 0 else 1\n            right = standing[k + 1] if k + 1 < len(standing) else 1\n            total = left * standing[k] * right + burst(standing[:k] + standing[k + 1:])\n            if total > best:\n                best = total\n        return best\n    return burst(list(nums))\n",
+  "failureHint": "hidden tests include a single balloon, two balloons, and a weak balloon between strong neighbors",
+  "expectedComplexity": {
+    "time": "O(n^3)",
+    "space": "O(n^2)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            2,
+            4
+          ]
+        ],
+        "failNote": "burst order changes the products your balloons earn"
+      },
+      {
+        "args": [
+          [
+            7
+          ]
+        ],
+        "failNote": "the virtual ends count as value 1"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            5
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            9,
+            1,
+            9
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            5,
+            1
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            2,
+            3,
+            4
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            34,
+            21,
+            87,
+            45,
+            12,
+            99,
+            3,
+            58
+          ]
+        ]
+      }
+    ]
+  }
+}

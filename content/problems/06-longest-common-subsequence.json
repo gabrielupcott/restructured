@@ -1,0 +1,110 @@
+{
+  "id": "06-longest-common-subsequence",
+  "title": "Longest Common Subsequence",
+  "track": "Dynamic Programming",
+  "difficulty": "medium",
+  "topics": [
+    "dynamic-programming",
+    "strings"
+  ],
+  "source": "canonical Longest Common Subsequence concept; description, examples, and tests re-authored",
+  "description": "The inputs are two lowercase strings. Return the length of their longest common subsequence: the longest run of characters that appears in both strings in the same relative order, without needing to be adjacent in either.",
+  "constraints": [
+    "1 <= len(text1) <= 12",
+    "1 <= len(text2) <= 12",
+    "both strings consist of lowercase letters"
+  ],
+  "parameters": [
+    "text1",
+    "text2"
+  ],
+  "functionName": "lcs",
+  "starterCode": "def lcs(text1, text2):\n    # Return the length of the longest common subsequence.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "text1": "regularity",
+        "text2": "morality"
+      },
+      "output": 5,
+      "explanation": "\"raity\" appears in both strings in order: r, a, i, t, y."
+    },
+    {
+      "input": {
+        "text1": "sunday",
+        "text2": "saturday"
+      },
+      "output": 5,
+      "explanation": "\"suday\" appears in both strings in order."
+    }
+  ],
+  "hints": [
+    "Compare the strings from their ends: matching last characters extend a common subsequence by one.",
+    "When the last characters differ, the answer is the better of dropping one character from either string.",
+    "A table over prefixes of both strings fills in O(m * n); matching characters take the diagonal plus one, mismatches take the better neighbor."
+  ],
+  "solution": "Table over all prefix pairs: equal characters extend the diagonal value by one, unequal characters inherit the better of the two neighbor prefixes. O(m * n) time, one rolling row of O(min(m, n)) space.",
+  "solutionCode": "def lcs(text1, text2):\n    if len(text2) > len(text1):\n        text1, text2 = text2, text1\n    previous = [0] * (len(text2) + 1)\n    for ch in text1:\n        current = [0] * (len(text2) + 1)\n        for j, other in enumerate(text2, 1):\n            if ch == other:\n                current[j] = previous[j - 1] + 1\n            else:\n                current[j] = max(previous[j], current[j - 1])\n        previous = current\n    return previous[len(text2)]\n",
+  "bruteForceCode": "def lcs(text1, text2):\n    def walk(i, j):\n        if i == len(text1) or j == len(text2):\n            return 0\n        if text1[i] == text2[j]:\n            return 1 + walk(i + 1, j + 1)\n        return max(walk(i + 1, j), walk(i, j + 1))\n    return walk(0, 0)\n",
+  "failureHint": "hidden tests include identical strings, no shared characters, and interleaved matches",
+  "expectedComplexity": {
+    "time": "O(m * n)",
+    "space": "O(min(m, n))"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          "regularity",
+          "morality"
+        ],
+        "failNote": "subsequence characters keep their relative order"
+      },
+      {
+        "args": [
+          "sunday",
+          "saturday"
+        ],
+        "failNote": "shared characters need not be adjacent"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          "a",
+          "a"
+        ]
+      },
+      {
+        "args": [
+          "a",
+          "b"
+        ]
+      },
+      {
+        "args": [
+          "abc",
+          "abc"
+        ]
+      },
+      {
+        "args": [
+          "chess",
+          "cheese"
+        ]
+      },
+      {
+        "args": [
+          "abcde",
+          "bdf"
+        ]
+      },
+      {
+        "args": [
+          "qwertyuiopa",
+          "zxcvbnmkljh"
+        ]
+      }
+    ]
+  }
+}

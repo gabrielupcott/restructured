@@ -29,6 +29,8 @@ export interface TestOutcome {
 export interface RunSpec {
   code: string
   functionName: string
+  /** Optional prepare block for structured inputs (linked lists, trees). */
+  prepareCode?: string
   tests: { args: unknown[]; expected: unknown }[]
 }
 
@@ -112,7 +114,23 @@ export class Runner {
     )
   }
 
+  private queue: Promise<unknown> = Promise.resolve()
+
+  /**
+   * Serializes every worker exchange: boot, lint, and runs never interleave,
+   * so a prewarm in flight cannot race a player hitting Run early.
+   */
   private ask(
+    message: Parameters<Worker['postMessage']>[0],
+    accept: string[],
+    watchdogMs: number,
+  ): Promise<WorkerOutbound> {
+    const settled = this.queue.then(() => this.askOnce(message, accept, watchdogMs))
+    this.queue = settled.catch(() => undefined)
+    return settled
+  }
+
+  private askOnce(
     message: Parameters<Worker['postMessage']>[0],
     accept: string[],
     watchdogMs: number,
@@ -147,7 +165,12 @@ export class Runner {
 
   private async install(spec: RunSpec, handlers: RunHandlers): Promise<boolean> {
     const reply = await this.ask(
-      { type: 'install', code: spec.code, functionName: spec.functionName },
+      {
+        type: 'install',
+        code: spec.code,
+        functionName: spec.functionName,
+        prepareCode: spec.prepareCode,
+      },
       ['installed', 'install-error'],
       WATCHDOG_MS,
     )
@@ -156,6 +179,20 @@ export class Runner {
       return false
     }
     return true
+  }
+
+  /**
+   * Boots the worker and installs the starter solution so the screen is
+   * ready before the player finishes reading. Failures resolve false and
+   * resurface on the first real run, where they have proper UI.
+   */
+  async prewarm(spec: RunSpec): Promise<boolean> {
+    try {
+      await this.ensureWorker()
+      return await this.install(spec, {})
+    } catch {
+      return false
+    }
   }
 
   /**

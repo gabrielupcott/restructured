@@ -16,7 +16,7 @@ export interface LintDiagnostic {
 
 export type WorkerInbound =
   | { type: 'init'; pyodideBase: string }
-  | { type: 'install'; code: string; functionName: string }
+  | { type: 'install'; code: string; functionName: string; prepareCode?: string }
   | { type: 'run-one'; args: unknown[] }
   | { type: 'lint'; code: string }
 

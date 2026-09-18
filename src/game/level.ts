@@ -9,14 +9,21 @@ export interface LevelThreshold {
   title: string
 }
 
-/** The title ladder. Game-design numbers, tuned by decision only. */
+/**
+ * The title ladder. Game-design numbers, tuned by decision only.
+ *
+ * Borders span the locked 62-problem roster: a perfect run of every problem
+ * earns 17x100 + 34x250 + 11x500 = 15,700 XP, so EXPERT sits just under the
+ * ceiling and each later tier is roughly a quarter of the game apart
+ * (~6, 16, 30, 46, and 60 full-value solves).
+ */
 export const LEVELS: LevelThreshold[] = [
   { xp: 0, title: 'BEGINNER' },
-  { xp: 200, title: 'NOVICE' },
-  { xp: 500, title: 'INTERMEDIATE' },
-  { xp: 900, title: 'EXPERIENCED' },
-  { xp: 1400, title: 'PROFESSIONAL' },
-  { xp: 2000, title: 'EXPERT' },
+  { xp: 1500, title: 'NOVICE' },
+  { xp: 4000, title: 'INTERMEDIATE' },
+  { xp: 7500, title: 'EXPERIENCED' },
+  { xp: 11500, title: 'PROFESSIONAL' },
+  { xp: 15000, title: 'EXPERT' },
 ]
 
 /**

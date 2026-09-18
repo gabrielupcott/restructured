@@ -31,6 +31,23 @@ function difficultyClass(difficulty: string): string {
   return 'text-dos-red group-hover:text-dos-bg'
 }
 
+/** DOM id for a track's map section (rail buttons scroll to it). */
+export function trackSectionId(name: string): string {
+  return `track-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+}
+
+/** DOM id for the problem list inside a track section. */
+function trackListId(name: string): string {
+  return `track-list-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+}
+
+/** Scrolls the track section into view; instant under prefers-reduced-motion. */
+function scrollToTrack(name: string): void {
+  document
+    .getElementById(trackSectionId(name))
+    ?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
+}
+
 /**
  * Inline best-run record: best time plus a color-coded runtime (green
  * fast, orange slow). Tier label and the practice best live on hover.
@@ -95,10 +112,43 @@ function Connector() {
 }
 
 /**
+ * Hover card listing a track's problems with solved marks. Lives inside the
+ * rail entry's group, so hovering the bar (or the card itself) keeps it up.
+ * The keyboard path keys on :focus-visible rather than plain focus so a
+ * mouse click that leaves focus behind does not pin the card open.
+ */
+function TrackPeek({ track, progress }: { track: TrackGroup; progress: PlayerProgress }) {
+  return (
+    <div
+      className="invisible absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 border-2 border-dos-faint bg-dos-bg p-3 opacity-0 group-hover:visible group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:opacity-100"
+    >
+      <p className="mb-2 text-xs tracking-[0.3em] text-dos-white">{track.name.toUpperCase()}</p>
+      <ul className="space-y-1">
+        {track.problems.map((problem) => {
+          const solved = isSolved(progress, problem.id)
+          return (
+            <li key={problem.id} className="flex items-center gap-2 whitespace-nowrap text-xs">
+              <span className={solved ? 'text-dos-green' : 'text-dos-dim'}>
+                {solved ? '[x]' : '[ ]'}
+              </span>
+              <span className={solved ? 'text-dos-white' : 'text-dos-dim'}>{problem.title}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+/**
  * Fixed rail of per-track progress bars, one per map section in chain
- * order, so progress stays visible at any scroll position. Desktop only:
- * below lg the content spans nearly the full viewport and a fixed rail
- * would cover it, so the header row carries the bars there instead.
+ * order, so progress stays visible at any scroll position. The rail caps
+ * at 82% of the viewport height and the bars share it evenly (bounded to
+ * the familiar 20px-to-80px band), so every track stays on screen as
+ * tracks are added. Hovering a bar lists that track's problems with
+ * solved marks; clicking jumps to the section. Desktop only: below lg the
+ * content spans nearly the full viewport and a fixed rail would cover it,
+ * so the header row carries the bars there instead.
  */
 function TrackRail({
   tracks,
@@ -109,7 +159,7 @@ function TrackRail({
 }) {
   return (
     <div
-      className="fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-5 lg:flex"
+      className="fixed left-4 top-1/2 z-40 hidden h-[min(82vh,44rem)] -translate-y-1/2 flex-col items-center gap-3 lg:flex"
     >
       {tracks.map((track) => {
         const identity = trackIdentity(track.name)
@@ -121,13 +171,18 @@ function TrackRail({
         return (
           <div
             key={track.name}
-            className="flex flex-col items-center gap-1"
-            title={`${track.name}: ${solved}/${track.problems.length} solved`}
+            className="group relative flex min-h-0 flex-1 flex-col items-center gap-1"
           >
-            <div className="flex h-20 w-3 items-end border border-dos-faint">
+            <button
+              type="button"
+              onClick={() => scrollToTrack(track.name)}
+              aria-label={`Jump to ${track.name}, ${solved} of ${track.problems.length} solved`}
+              className="flex max-h-20 min-h-6 w-3 flex-1 items-end border border-dos-faint hover:border-dos-cyan"
+            >
               <div className={`w-full ${identity.bgClass}`} style={{ height: `${percent}%` }} />
-            </div>
+            </button>
             <span className={`text-xs ${identity.textClass}`}>{identity.motif}</span>
+            <TrackPeek track={track} progress={progress} />
           </div>
         )
       })}
@@ -195,15 +250,19 @@ function ProblemRow({
   )
 }
 
-/** Track node on the map: motif, accent, name, and solve count. */
+/** Track node on the map: motif, accent, name, solve count, collapse toggle. */
 function TrackNode({
   name,
   solved,
   total,
+  collapsed,
+  onToggle,
 }: {
   name: string
   solved: number
   total: number
+  collapsed: boolean
+  onToggle(): void
 }) {
   const identity = trackIdentity(name)
   const complete = solved === total
@@ -216,6 +275,16 @@ function TrackNode({
       ) : (
         <span className="text-xs text-dos-dim">{`${solved}/${total}`}</span>
       )}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+        aria-controls={trackListId(name)}
+        title={collapsed ? 'EXPAND PROBLEMS' : 'COLLAPSE PROBLEMS'}
+        className="ml-1 border-2 border-dos-dim px-2 py-0.5 text-xs text-dos-dim hover:border-dos-cyan hover:text-dos-cyan"
+      >
+        {collapsed ? '[+]' : '[-]'}
+      </button>
     </div>
   )
 }
@@ -245,9 +314,19 @@ export default function MenuScreen({ progress, onStart }: MenuScreenProps) {
   const tracks = useMemo(() => groupByTrack(PROBLEMS), [])
   const xp = totalXp(progress)
   const title = titleForXp(xp)
+  const [collapsedTracks, setCollapsedTracks] = useState<Set<string>>(() => new Set())
   const [booting, setBooting] = useState(
     () => !prefersReducedMotion() && !hasBootedThisSession(),
   )
+
+  function toggleTrack(name: string) {
+    setCollapsedTracks((current) => {
+      const next = new Set(current)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+  }
 
   useEffect(() => {
     function replay() {
@@ -297,16 +376,18 @@ export default function MenuScreen({ progress, onStart }: MenuScreenProps) {
               ? 0
               : Math.round((solved / track.problems.length) * 100)
           return (
-            <div
+            <button
               key={track.name}
-              className="flex items-center gap-2"
-              title={`${track.name}: ${solved}/${track.problems.length} solved`}
+              type="button"
+              onClick={() => scrollToTrack(track.name)}
+              aria-label={`Jump to ${track.name}, ${solved} of ${track.problems.length} solved`}
+              className="flex items-center gap-2 hover:opacity-80"
             >
               <span className={`text-xs ${identity.textClass}`}>{identity.motif}</span>
               <div className="h-2 w-16 border border-dos-faint">
                 <div className={`h-full ${identity.bgClass}`} style={{ width: `${percent}%` }} />
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
@@ -314,16 +395,23 @@ export default function MenuScreen({ progress, onStart }: MenuScreenProps) {
       <div className="mt-12 w-full">
         {tracks.map((track, index) => {
           const solved = track.problems.filter((problem) => isSolved(progress, problem.id)).length
+          const collapsed = collapsedTracks.has(track.name)
           return (
             <div key={track.name}>
               {index > 0 && <Connector />}
-              <section>
+              <section id={trackSectionId(track.name)} className="scroll-mt-10">
                 <TrackNode
                   name={track.name}
                   solved={solved}
                   total={track.problems.length}
+                  collapsed={collapsed}
+                  onToggle={() => toggleTrack(track.name)}
                 />
-                <ul className="mt-3 space-y-3">
+                <ul
+                  id={trackListId(track.name)}
+                  hidden={collapsed}
+                  className="mt-3 space-y-3"
+                >
                   {track.problems.map((problem, problemIndex) => {
                     const unlocked =
                       problemIndex === 0 || isSolved(progress, track.problems[problemIndex - 1].id)
@@ -345,18 +433,22 @@ export default function MenuScreen({ progress, onStart }: MenuScreenProps) {
           )
         })}
 
-        <Connector />
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-2 text-xs tracking-widest text-dos-faint">COMING SOON</span>
-          {UPCOMING_TRACKS.map((name) => (
-            <span
-              key={name}
-              className="border-2 border-dashed border-dos-faint px-3 py-1 text-xs text-dos-faint"
-            >
-              {name.toUpperCase()}
-            </span>
-          ))}
-        </div>
+        {UPCOMING_TRACKS.length > 0 && (
+          <>
+            <Connector />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mr-2 text-xs tracking-widest text-dos-faint">COMING SOON</span>
+              {UPCOMING_TRACKS.map((name) => (
+                <span
+                  key={name}
+                  className="border-2 border-dashed border-dos-faint px-3 py-1 text-xs text-dos-faint"
+                >
+                  {name.toUpperCase()}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </main>
   )

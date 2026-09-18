@@ -1,0 +1,133 @@
+{
+  "id": "09-combination-sum",
+  "title": "Combination Sum",
+  "track": "Trees",
+  "difficulty": "medium",
+  "topics": [
+    "backtracking"
+  ],
+  "source": "canonical Combination Sum concept; description, examples, and tests re-authored",
+  "description": "The input is an array of distinct positive integers and a target. Return every combination of values that sums exactly to target, where a value may be used any number of times. Combinations that differ only in order count once. Sort the values inside each combination ascending, and sort the list of combinations ascending.",
+  "constraints": [
+    "2 <= len(candidates) <= 6",
+    "1 <= candidates[i] <= 40",
+    "1 <= target <= 40",
+    "every candidate value is distinct"
+  ],
+  "parameters": [
+    "candidates",
+    "target"
+  ],
+  "functionName": "combination_sum",
+  "starterCode": "def combination_sum(candidates, target):\n    # Return unique combos summing to target; reuse allowed, order-free.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "candidates": [
+          3,
+          4,
+          5
+        ],
+        "target": 8
+      },
+      "output": [
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "explanation": "3 + 5 and 4 + 4 are the only ways to reach 8."
+    },
+    {
+      "input": {
+        "candidates": [
+          2
+        ],
+        "target": 3
+      },
+      "output": [],
+      "explanation": "Twos alone never land on an odd target."
+    }
+  ],
+  "hints": [
+    "Reuse means a recursion that stays on the same value is allowed; skipping forward past it is what keeps combinations unique.",
+    "Feed the recursion a start index: candidate values before it may not be picked again, which kills reordered duplicates.",
+    "When the remainder hits zero, record a copy of the picks; when a candidate overshoots the remainder, abandon that branch."
+  ],
+  "solution": "Backtracking over a start index: each step tries candidates from the index onward (reuse allowed by retrying the same index), pruning the moment a value overshoots. Sorting first lets the pruning break early. Output normalized by sorting. Exponential in the target, with O(target) recursion depth.",
+  "solutionCode": "def combination_sum(candidates, target):\n    values = sorted(candidates)\n    result = []\n    combo = []\n    def walk(start, remaining):\n        if remaining == 0:\n            result.append(list(combo))\n            return\n        for i in range(start, len(values)):\n            value = values[i]\n            if value > remaining:\n                break\n            combo.append(value)\n            walk(i, remaining - value)\n            combo.pop()\n    walk(0, target)\n    return sorted(result)\n",
+  "bruteForceCode": "def combination_sum(candidates, target):\n    found = set()\n    combo = []\n    def walk(remaining):\n        if remaining == 0:\n            found.add(tuple(sorted(combo)))\n            return\n        for value in sorted(candidates):\n            if value <= remaining:\n                combo.append(value)\n                walk(remaining - value)\n                combo.pop()\n    walk(target)\n    return [list(item) for item in sorted(found)]\n",
+  "failureHint": "hidden tests include impossible targets and targets reachable only by reusing values",
+  "expectedComplexity": {
+    "time": "O(candidates^target)",
+    "space": "O(target)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            3,
+            4,
+            5
+          ],
+          8
+        ],
+        "failNote": "values may repeat inside one combination"
+      },
+      {
+        "args": [
+          [
+            2
+          ],
+          3
+        ],
+        "failNote": "an unreachable target returns an empty list"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            3,
+            5
+          ],
+          4
+        ]
+      },
+      {
+        "args": [
+          [
+            4,
+            6
+          ],
+          5
+        ]
+      },
+      {
+        "args": [
+          [
+            2,
+            7
+          ],
+          14
+        ]
+      },
+      {
+        "args": [
+          [
+            3,
+            4,
+            5,
+            7
+          ],
+          40
+        ]
+      }
+    ]
+  }
+}

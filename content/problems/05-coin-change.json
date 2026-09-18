@@ -1,0 +1,131 @@
+{
+  "id": "05-coin-change",
+  "title": "Coin Change",
+  "track": "Dynamic Programming",
+  "difficulty": "medium",
+  "topics": [
+    "dynamic-programming"
+  ],
+  "source": "canonical Coin Change concept; description, examples, and tests re-authored",
+  "description": "The input is an array of coin values and a target amount. Return the smallest number of coins whose values sum exactly to amount, reusing values freely. Return -1 when no combination works. An amount of 0 needs 0 coins.",
+  "constraints": [
+    "1 <= len(coins) <= 12",
+    "1 <= coins[i] <= 1000",
+    "0 <= amount <= 60"
+  ],
+  "parameters": [
+    "coins",
+    "amount"
+  ],
+  "functionName": "coin_change",
+  "starterCode": "def coin_change(coins, amount):\n    # Return the fewest coins summing to amount, or -1.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "coins": [
+          1,
+          3,
+          4
+        ],
+        "amount": 6
+      },
+      "output": 2,
+      "explanation": "Two 3-coins reach 6; grabbing a 4 first would waste moves on 4+1+1."
+    },
+    {
+      "input": {
+        "coins": [
+          2
+        ],
+        "amount": 3
+      },
+      "output": -1,
+      "explanation": "No combination of 2s lands exactly on 3."
+    }
+  ],
+  "hints": [
+    "Build the answer for every amount from 0 upward, not for the target alone.",
+    "The fewest coins for amount a is one plus the fewest coins for a - c, taken over the coins c that fit.",
+    "Fill a table from 0 to amount: table[a] = min(table[a - c] + 1) over fitting coins; unreachable stays infinite."
+  ],
+  "solution": "Bottom-up table over amounts 0 to target: each entry is one more than the best smaller amount reachable by spending one coin. O(n * amount) time where n is the coin count, O(amount) space.",
+  "solutionCode": "def coin_change(coins, amount):\n    table = [amount + 1] * (amount + 1)\n    table[0] = 0\n    for total in range(1, amount + 1):\n        for coin in coins:\n            if coin <= total and table[total - coin] + 1 < table[total]:\n                table[total] = table[total - coin] + 1\n    return -1 if table[amount] > amount else table[amount]\n",
+  "bruteForceCode": "def coin_change(coins, amount):\n    best = [None]\n    def walk(remaining, used):\n        if remaining == 0:\n            if best[0] is None or used < best[0]:\n                best[0] = used\n            return\n        for coin in coins:\n            if coin <= remaining:\n                walk(remaining - coin, used + 1)\n    walk(amount, 0)\n    return -1 if best[0] is None else best[0]\n",
+  "failureHint": "hidden tests include impossible amounts, an amount of 0, and values that tempt a greedy first pick",
+  "expectedComplexity": {
+    "time": "O(n * amount)",
+    "space": "O(amount)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            1,
+            3,
+            4
+          ],
+          6
+        ],
+        "failNote": "the biggest coin first is not always fewest coins"
+      },
+      {
+        "args": [
+          [
+            2
+          ],
+          3
+        ],
+        "failNote": "exact sums only; overshoot does not count"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            3,
+            7,
+            8,
+            9
+          ],
+          60
+        ]
+      },
+      {
+        "args": [
+          [
+            2
+          ],
+          3
+        ]
+      },
+      {
+        "args": [
+          [
+            6,
+            5,
+            1
+          ],
+          23
+        ]
+      },
+      {
+        "args": [
+          [
+            5,
+            10
+          ],
+          7
+        ]
+      },
+      {
+        "args": [
+          [
+            4
+          ],
+          0
+        ]
+      }
+    ]
+  }
+}

@@ -13,13 +13,21 @@ import traceback
 
 _SOLUTION_NS = {}
 _SOLUTION_FN = None
+_PREPARE = None
 
 
 def install_solution():
-    global _SOLUTION_FN
+    global _SOLUTION_FN, _PREPARE
     code = globals()['__CODE']
     fn_name = globals()['__FN']
     namespace = {}
+    # Problems with structured inputs (linked lists, trees) carry a prepare
+    # block: it defines the node classes, converts the JSON args into live
+    # objects, and returns (call_args, finisher). Building inputs happens
+    # outside the timed window; the finisher serializes the return value.
+    prep_code = globals().get('__PREP_CODE')
+    if prep_code:
+        exec(compile(prep_code, '<prepare>', 'exec'), namespace)
     exec(compile(code, '<solution>', 'exec'), namespace)
     fn = namespace.get(fn_name)
     if fn is None:
@@ -27,6 +35,7 @@ def install_solution():
     _SOLUTION_NS.clear()
     _SOLUTION_NS.update(namespace)
     _SOLUTION_FN = fn
+    _PREPARE = namespace.get('prepare') if prep_code else None
 
 
 def install_pyflakes():
@@ -81,10 +90,15 @@ def lint_one():
 
 
 def run_one():
-    args = json.loads(globals()['__ARGS_JSON'])
+    raw_args = json.loads(globals()['__ARGS_JSON'])
+    finish = None
+    if _PREPARE is not None:
+        call_args, finish = _PREPARE(raw_args)
+    else:
+        call_args = raw_args
     start = time.perf_counter()
     try:
-        out = _SOLUTION_FN(*args)
+        out = _SOLUTION_FN(*call_args)
     except BaseException:
         return json.dumps({'status': 'error', 'error': traceback.format_exc()})
     single = time.perf_counter() - start
@@ -94,14 +108,36 @@ def run_one():
         # rounds to ~100us), so a single timing can land on 0. Time a batch
         # and report the per-call average instead. The first call's result
         # is the reported answer; repeats are for timing only.
+        #
+        # Prepared problems rebuild fresh inputs per repeat (outside the
+        # timed window) and finish each repeat immediately: solutions may
+        # mutate or rebuild node chains, so a repeat must never walk stale
+        # links, and no long chain may sit unlinked-and-dead for the garbage
+        # collector to cascade over.
         reps = min(200, max(20, int(0.05 / max(single, 1e-05))))
         try:
-            batch_start = time.perf_counter()
-            for _ in range(reps):
-                _SOLUTION_FN(*args)
-            runtime = (time.perf_counter() - batch_start) / reps
+            if _PREPARE is None:
+                batch_start = time.perf_counter()
+                for _ in range(reps):
+                    _SOLUTION_FN(*call_args)
+                runtime = (time.perf_counter() - batch_start) / reps
+            else:
+                # Prepared problems: rebuild fresh inputs per repeat outside
+                # the timed window, time only the solution call, and finish
+                # each repeat immediately so no long node chain sits dead for
+                # the garbage collector to cascade over.
+                total = 0.0
+                for _ in range(reps):
+                    repeat_args, repeat_finish = _PREPARE(raw_args)
+                    mark = time.perf_counter()
+                    repeat_out = _SOLUTION_FN(*repeat_args)
+                    total += time.perf_counter() - mark
+                    repeat_finish(repeat_out)
+                runtime = total / reps
         except BaseException:
             runtime = single
+    if finish is not None:
+        out = finish(out)
     try:
         actual = json.dumps(out)
     except (TypeError, ValueError) as exc:

@@ -1,0 +1,164 @@
+{
+  "id": "07-subsets",
+  "title": "Subsets",
+  "track": "Trees",
+  "difficulty": "medium",
+  "topics": [
+    "backtracking"
+  ],
+  "source": "canonical Subsets concept; description, examples, and tests re-authored",
+  "description": "The input is an array of distinct integers. Return every subset that can be formed from its values, including the empty subset. Sort the values inside each subset ascending, and sort the list of subsets ascending as well, so the output is deterministic.",
+  "constraints": [
+    "1 <= len(nums) <= 12",
+    "-10 <= nums[i] <= 10",
+    "every value in nums is distinct"
+  ],
+  "parameters": [
+    "nums"
+  ],
+  "functionName": "subsets",
+  "starterCode": "def subsets(nums):\n    # Return all subsets, each sorted, the list of subsets sorted.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "nums": [
+          1,
+          2,
+          3
+        ]
+      },
+      "output": [
+        [],
+        [
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3
+        ]
+      ],
+      "explanation": "Eight subsets for three values: each value is either in or out."
+    },
+    {
+      "input": {
+        "nums": [
+          5
+        ]
+      },
+      "output": [
+        [],
+        [
+          5
+        ]
+      ],
+      "explanation": "One value gives the empty subset and itself."
+    }
+  ],
+  "hints": [
+    "Walk the values in order; at each one you face the same binary choice: include it or skip it.",
+    "The choice tree has 2^n leaves, one per subset, and the current pick list is the subset so far.",
+    "Recurse over the index: append the value, recurse, pop it, recurse again; record a copy at the leaves, then sort everything."
+  ],
+  "solution": "Backtracking over the index with an include-or-skip decision at each value records all 2^n subsets. Sorting normalizes the output order. O(2^n) subsets of work, O(n) recursion depth.",
+  "solutionCode": "def subsets(nums):\n    values = sorted(nums)\n    result = []\n    current = []\n    def walk(index):\n        if index == len(values):\n            result.append(list(current))\n            return\n        current.append(values[index])\n        walk(index + 1)\n        current.pop()\n        walk(index + 1)\n    walk(0)\n    return sorted(result)\n",
+  "bruteForceCode": "def subsets(nums):\n    values = sorted(nums)\n    n = len(values)\n    result = []\n    for mask in range(1 << n):\n        subset = []\n        for i in range(n):\n            if mask & (1 << i):\n                subset.append(values[i])\n        duplicate = False\n        for existing in result:\n            if existing == subset:\n                duplicate = True\n                break\n        if not duplicate:\n            result.append(subset)\n    return sorted(result)\n",
+  "failureHint": "hidden tests include one value, negative values, and a full twelve-value input",
+  "expectedComplexity": {
+    "time": "O(2^n)",
+    "space": "O(n)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "failNote": "the empty subset counts, and each subset must be sorted"
+      },
+      {
+        "args": [
+          [
+            5
+          ]
+        ],
+        "failNote": "one value gives two subsets"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          [
+            7
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            -3,
+            0,
+            4,
+            9
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            10,
+            -10
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ]
+        ]
+      }
+    ]
+  }
+}

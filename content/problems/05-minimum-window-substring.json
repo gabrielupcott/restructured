@@ -1,0 +1,123 @@
+{
+  "id": "05-minimum-window-substring",
+  "title": "Minimum Window Substring",
+  "track": "Strings",
+  "difficulty": "hard",
+  "topics": [
+    "strings",
+    "sliding-window",
+    "hash-maps"
+  ],
+  "source": "canonical Minimum Window Substring concept; description, examples, and tests re-authored",
+  "description": "The inputs are two lowercase strings, s and t. Return the shortest substring of s that contains every character of t, honoring repeats: if t holds two \"a\" characters, the window must hold at least two as well. Among equally short windows return the leftmost. Return the empty string when no window covers t.",
+  "constraints": [
+    "1 <= len(s) <= 10000",
+    "1 <= len(t) <= 100",
+    "s and t consist of lowercase letters"
+  ],
+  "parameters": [
+    "s",
+    "t"
+  ],
+  "functionName": "min_window",
+  "starterCode": "def min_window(s, t):\n    # Return the shortest substring of s covering all of t, or \"\".\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "s": "ebbamnacbba",
+        "t": "abc"
+      },
+      "output": "acb",
+      "explanation": "The window \"acb\" (positions 6 through 8) is the shortest one holding a, b, and c."
+    },
+    {
+      "input": {
+        "s": "abc",
+        "t": "d"
+      },
+      "output": "",
+      "explanation": "No window can contain a character that s lacks."
+    }
+  ],
+  "hints": [
+    "A window is valid when, for every character, the window holds at least as many copies as t does.",
+    "Growing the window can only fix validity; shrinking can only break it. That one-way behavior is exactly what a sliding window exploits.",
+    "Expand right until the window is valid, then advance left while it stays valid, recording the best. A counter of how many required characters are still missing makes each step O(1)."
+  ],
+  "solution": "Sliding window with need counts: expand the right edge until every required character is covered, then move the left edge as far as validity allows, recording the smallest window. Each index enters and leaves the window once: O(len(s) + len(t)) time, O(k) space for the counts where k is the alphabet in play.",
+  "solutionCode": "def min_window(s, t):\n    need = {}\n    for ch in t:\n        need[ch] = need.get(ch, 0) + 1\n    missing = len(need)\n    best_start, best_len = 0, len(s) + 1\n    left = 0\n    for right, ch in enumerate(s):\n        if ch in need:\n            need[ch] -= 1\n            if need[ch] == 0:\n                missing -= 1\n        if missing == 0:\n            while s[left] not in need or need[s[left]] < 0:\n                if s[left] in need:\n                    need[s[left]] += 1\n                left += 1\n            if right - left + 1 < best_len:\n                best_start, best_len = left, right - left + 1\n    return \"\" if best_len > len(s) else s[best_start:best_start + best_len]\n",
+  "bruteForceCode": "def min_window(s, t):\n    need = {}\n    for ch in t:\n        need[ch] = need.get(ch, 0) + 1\n    best = \"\"\n    for i in range(len(s)):\n        counts = {}\n        covered = 0\n        for j in range(i, len(s)):\n            ch = s[j]\n            if ch in need:\n                counts[ch] = counts.get(ch, 0) + 1\n                if counts[ch] == need[ch]:\n                    covered += 1\n            if covered == len(need):\n                if not best or j - i + 1 < len(best):\n                    best = s[i:j + 1]\n                break\n    return best\n",
+  "failureHint": "hidden tests include repeated characters in t, windows of length len(t), and no valid window",
+  "expectedComplexity": {
+    "time": "O(n)",
+    "space": "O(k)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          "ebbamnacbba",
+          "abc"
+        ],
+        "failNote": "the window must cover every character of t"
+      },
+      {
+        "args": [
+          "abc",
+          "d"
+        ],
+        "failNote": "a character missing from s means the answer is empty"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          "a",
+          "a"
+        ]
+      },
+      {
+        "args": [
+          "ab",
+          "b"
+        ]
+      },
+      {
+        "args": [
+          "aa",
+          "aa"
+        ]
+      },
+      {
+        "args": [
+          "abca",
+          "ac"
+        ]
+      },
+      {
+        "args": [
+          "xxaybzc",
+          "abc"
+        ]
+      },
+      {
+        "args": [
+          "zxyabxcay",
+          "abc"
+        ]
+      },
+      {
+        "args": [
+          "ttttcaccc",
+          "ac"
+        ]
+      },
+      {
+        "args": [
+          "oxrrbjforwwkfkcgszuylhrtyunjuamzksyqgaqzunfsslebfvfwgyccbzeukysmyvaaoqhepvsmlhsfdgwfaoqoyyeggualomdcqeugxykalqjwsinxxpwsawlfxnfecjcpebthnubagvkmviagslcterfyeldisqceixaefrianmfgmzffismbqceicpbomnmnnruelfttwgflkxzjbiqihivgnjmrcrecaukkgfxwuashjqjxncdqedincaiiaaktfpshcecjhjkejwbrhzsgbdpgvqzffwckbqgqhjgztrvtbfsnvoztjaophgimafdfoohbvephnzlnsmyvdbkgjvrtlhzikthmosrabiajwvqhmzzkqneziftcfsuzcnekccbjeenjfegkwhuuvrsqaunthfsgwershvgsiaoaysgmerxoynibyntqgnqerlfqeddutjgweftqhhfnhqsjfyvtkptvtipcvpkbleptkzoanklzaudelbjmxlgfuxapfiyrmxianxwemmonqqfhhsotpmkymqekgtntfqotfstezshljzfgjlcmedpzjmodsxhzhdltozukboevuwddeecuetnqrrqeflvbcqpmzibbnyjajhahzytlarqzesdfittojiozflqdwdbqwlivhxqkvlqavahhaqpdjwmukvtopfismhcyotqnoywhkongybrtxjymfnqsnmhcmvqnhnyqlmowcilgqcyccfoyslviooacdvnqcwwoycreyyagltlctcfqyocuzrlyvnzroaigbshibfpkbxajlmweamxzkwjecjhyfihujbwfnvlpngfhygwhporcqtfampjaefpgqidyzxlysgnrwqgpoynxdjrhpvirjdcnlgjwerrzsrqbqnllfezskovdgfhnsrnfhmwmfcehdmvixjuxfigqiarlvvftudtjiutirdpieclpcssprzgjjyglokbwrplwqnueldqxyclgcohgsujyiupdnrtqxltbxdyjgmcqdvszmyaswkpbhcqwqmfdsezbstzyvuqelofcwoxumeagxwiltjshoraqdmshxgzpccwivrsjnjfiuwgenanjtcycylshmisdsqkevinrhmjbtsldmtwlttuagqwmjpvrslaoczvqlsiuzcoearkyjnqgdmupuvikizamxwagirfv",
+          "abc"
+        ]
+      }
+    ]
+  }
+}

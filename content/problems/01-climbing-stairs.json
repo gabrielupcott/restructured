@@ -1,0 +1,96 @@
+{
+  "id": "01-climbing-stairs",
+  "title": "Climbing Stairs",
+  "track": "Dynamic Programming",
+  "difficulty": "easy",
+  "topics": [
+    "dynamic-programming"
+  ],
+  "source": "canonical Climbing Stairs concept; description, examples, and tests re-authored",
+  "description": "You are climbing a staircase with n steps. Every move takes you up one or two steps. Return how many different orders of moves reach the top: one-then-two and two-then-one count as different orders.",
+  "constraints": [
+    "1 <= n <= 45"
+  ],
+  "parameters": [
+    "n"
+  ],
+  "functionName": "climb_stairs",
+  "starterCode": "def climb_stairs(n):\n    # Return the number of distinct move orders that reach step n.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "n": 2
+      },
+      "output": 2,
+      "explanation": "Two one-steps, or a single two-step."
+    },
+    {
+      "input": {
+        "n": 3
+      },
+      "output": 3,
+      "explanation": "1+1+1, 1+2, and 2+1."
+    }
+  ],
+  "hints": [
+    "Think about the very last move: it arrived from step n-1 or from step n-2.",
+    "The counts follow the same rule one step back and two steps back, which is the Fibonacci pattern.",
+    "Iterate from the bottom keeping only the last two counts: ways(n) = ways(n-1) + ways(n-2)."
+  ],
+  "solution": "The number of orders for n steps is the sum of the counts for n-1 and n-2 steps, because the last move was a one-step or a two-step. Iterating with two rolling values: O(n) time, O(1) space.",
+  "solutionCode": "def climb_stairs(n):\n    previous, current = 1, 1\n    for _ in range(2, n + 1):\n        previous, current = current, previous + current\n    return current\n",
+  "bruteForceCode": "def climb_stairs(n):\n    def ways(remaining):\n        if remaining <= 1:\n            return 1\n        return ways(remaining - 1) + ways(remaining - 2)\n    return ways(n)\n",
+  "failureHint": "hidden tests include one step and larger counts where naive recursion doubles back on itself",
+  "expectedComplexity": {
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          2
+        ],
+        "failNote": "count distinct move orders, not move combinations"
+      },
+      {
+        "args": [
+          3
+        ],
+        "failNote": "the Fibonacci pattern starts at 1, 1, 2, 3"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          1
+        ]
+      },
+      {
+        "args": [
+          2
+        ]
+      },
+      {
+        "args": [
+          3
+        ]
+      },
+      {
+        "args": [
+          5
+        ]
+      },
+      {
+        "args": [
+          9
+        ]
+      },
+      {
+        "args": [
+          28
+        ]
+      }
+    ]
+  }
+}

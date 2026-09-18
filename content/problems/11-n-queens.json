@@ -1,0 +1,127 @@
+{
+  "id": "11-n-queens",
+  "title": "N-Queens",
+  "track": "Trees",
+  "difficulty": "hard",
+  "topics": [
+    "backtracking"
+  ],
+  "source": "canonical N-Queens concept; description, examples, and tests re-authored",
+  "description": "Place n queens on an n by n board so that no two share a row, column, or diagonal; exactly one queen sits in each row. Return every distinct solution as a list of boards, where each board is a list of n strings made of \"Q\" and \".\" characters. Sort the list of boards ascending so the output is deterministic.",
+  "constraints": [
+    "4 <= n <= 8"
+  ],
+  "parameters": [
+    "n"
+  ],
+  "functionName": "solve_n_queens",
+  "starterCode": "def solve_n_queens(n):\n    # Return all solutions as sorted boards of \"Q\"/\".\" strings.\n    ...\n",
+  "examples": [
+    {
+      "input": {
+        "n": 4
+      },
+      "output": [
+        [
+          "..Q.",
+          "Q...",
+          "...Q",
+          ".Q.."
+        ],
+        [
+          ".Q..",
+          "...Q",
+          "Q...",
+          "..Q."
+        ]
+      ],
+      "explanation": "The 4 by 4 board has exactly two placements."
+    },
+    {
+      "input": {
+        "n": 6
+      },
+      "output": [
+        [
+          "....Q.",
+          "..Q...",
+          "Q.....",
+          ".....Q",
+          "...Q..",
+          ".Q...."
+        ],
+        [
+          "...Q..",
+          "Q.....",
+          "....Q.",
+          ".Q....",
+          ".....Q",
+          "..Q..."
+        ],
+        [
+          "..Q...",
+          ".....Q",
+          ".Q....",
+          "....Q.",
+          "Q.....",
+          "...Q.."
+        ],
+        [
+          ".Q....",
+          "...Q..",
+          ".....Q",
+          "Q.....",
+          "..Q...",
+          "....Q."
+        ]
+      ],
+      "explanation": "The 6 by 6 board has four placements."
+    }
+  ],
+  "hints": [
+    "One queen per row is forced, so the search is over columns: pick a column for row 0, then row 1, and so on.",
+    "Columns and both diagonal directions need their own occupancy marks; row minus col and row plus col each identify a diagonal.",
+    "Backtrack: mark, recurse into the next row, unmark. Render a board whenever the last row is placed, then sort at the end."
+  ],
+  "solution": "Backtracking row by row with column, diagonal, and anti-diagonal occupancy marks: each placement check is O(1), and boards render when all rows are placed. O(n!) search nodes with O(n) work each; output sorted for determinism.",
+  "solutionCode": "def solve_n_queens(n):\n    solutions = []\n    columns = [False] * n\n    diagonals = [False] * (2 * n)\n    anti = [False] * (2 * n)\n    rows = []\n    def place(row):\n        if row == n:\n            solutions.append([\".\" * col + \"Q\" + \".\" * (n - col - 1) for col in rows])\n            return\n        for col in range(n):\n            d = row - col + n\n            a = row + col\n            if columns[col] or diagonals[d] or anti[a]:\n                continue\n            columns[col] = diagonals[d] = anti[a] = True\n            rows.append(col)\n            place(row + 1)\n            rows.pop()\n            columns[col] = diagonals[d] = anti[a] = False\n    place(0)\n    return sorted(solutions)\n",
+  "bruteForceCode": "def solve_n_queens(n):\n    solutions = []\n    rows = []\n    def conflicts(row, col):\n        for other_row, other_col in enumerate(rows):\n            if other_col == col or abs(other_row - row) == abs(other_col - col):\n                return True\n        return False\n    def place(row):\n        if row == n:\n            solutions.append([\".\" * c + \"Q\" + \".\" * (n - c - 1) for c in rows])\n            return\n        for col in range(n):\n            if not conflicts(row, col):\n                rows.append(col)\n                place(row + 1)\n                rows.pop()\n    place(0)\n    return sorted(solutions)\n",
+  "failureHint": "hidden tests include the board sizes five, seven, and eight",
+  "expectedComplexity": {
+    "time": "O(n!)",
+    "space": "O(n)"
+  },
+  "tests": {
+    "visible": [
+      {
+        "args": [
+          4
+        ],
+        "failNote": "no two queens may share a column or diagonal either"
+      },
+      {
+        "args": [
+          6
+        ],
+        "failNote": "each board is a list of strings, one per row"
+      }
+    ],
+    "hidden": [
+      {
+        "args": [
+          8
+        ]
+      },
+      {
+        "args": [
+          5
+        ]
+      },
+      {
+        "args": [
+          7
+        ]
+      }
+    ]
+  }
+}

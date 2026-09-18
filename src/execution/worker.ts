@@ -49,6 +49,7 @@ self.onmessage = async (event: MessageEvent<WorkerInbound>) => {
     } else if (message.type === 'install') {
       pyodide!.globals.set('__CODE', message.code)
       pyodide!.globals.set('__FN', message.functionName)
+      pyodide!.globals.set('__PREP_CODE', message.prepareCode ?? '')
       try {
         await pyodide!.runPythonAsync('install_solution()')
         post({ type: 'installed' })

@@ -12,7 +12,7 @@ import {
   type PlayerProgress,
 } from './game/progress'
 import PalettePicker from './components/PalettePicker'
-import SoundToggle from './components/SoundToggle'
+import OptionsMenu from './components/OptionsMenu'
 import AdminPanel from './components/AdminPanel'
 import MenuScreen from './screens/MenuScreen'
 import { play } from './game/sound'
@@ -111,8 +111,8 @@ export default function App() {
       ) : (
         <>
           <div className="fixed right-4 top-3 z-50 flex items-start gap-2">
-            <SoundToggle />
             <PalettePicker />
+            <OptionsMenu progress={progress} onProgress={setProgress} />
           </div>
           <MenuScreen
             progress={progress}
