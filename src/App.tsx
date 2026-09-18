@@ -119,7 +119,7 @@ export default function App() {
             onStart={(id, mode) => setActive({ id, mode })}
           />
           <footer className="fixed bottom-3 right-4 text-xs text-dos-faint">
-            ALPHA 3 - made by{" "}
+            BETA 1 - made by{" "}
             <a
               href="https://gabrielupcott.dev"
               target="_blank"
