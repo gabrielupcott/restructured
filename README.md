@@ -48,6 +48,10 @@ npm run typecheck     # tsc
 npm run content:build # verify problem drafts, compute outputs + anchors, write generated bundles
 ```
 
+## Deployment
+
+The site deploys to GitHub Pages at `https://gabrielupcott.github.io/restructured/`. A push to `main` runs `.github/workflows/deploy.yml`, which installs, builds, and publishes `dist/`. The Pages source must be set to GitHub Actions in the repo settings (one time). The base path `/restructured/` is set in `vite.config.ts` to match the project-page URL.
+
 ## Project structure
 
 ```
