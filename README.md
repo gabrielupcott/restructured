@@ -1,24 +1,10 @@
 # Restructured
 
-A minimalist, DOS-styled video game for practicing algorithm problems. Pick a problem, read it, code a solution in the browser, run the tests, answer a Big-O quiz, earn XP, and unlock the next problem on the track.
+A minimalist, DOS-styled video game for practicing algorithm problems. Pick a problem, read it, code a solution, run the tests, answer a Big-O quiz, and earn XP to unlock the next one. The game ships with 62 problems across eleven tracks, from Arrays to Dynamic Programming.
 
-Local-first: a static site where all execution happens in the browser and progress is saved locally. There is no backend and no accounts.
+Play it at https://gabrielupcott.github.io/restructured/.
 
-## Status
-
-Alpha 1 shipped the core loop: eight verified problems across four tracks, a DOS-themed Monaco editor with pyflakes linting, run and submit with a stop control, per-test wall-clock timeouts with sandbox-reset recovery, tiered hidden-test feedback, and the palette system with presets plus custom colors.
-
-Alpha 2 added the game mechanics. Challenge and Practice modes share a timer that never pauses; once it passes par it keeps counting and flags OVERTIME. A three-hint ladder can end in a full solution reveal, and every accepted solve finishes with a Big-O quiz and the improve-it loop. XP takes modifiers for revealed hints and the quiz result. Later problems on a track unlock as earlier ones are solved, personal records are kept per mode, streaks are display-only, and the last 20 submissions per problem stay on the machine, viewable and restorable from the problem screen. All progress lives in `localStorage`.
-
-Alpha 3 added the personality. Every track carries an accent hue and an ASCII motif, and they follow the track everywhere: progress map, menu, problem screen, quiz, and results panel. The menu is the progress map, chaining track nodes in the suggested curriculum order with dashed connectors into the coming-soon Phase 4 tracks; progress bars sit in a fixed vertical rail on wide screens and a top row on narrow ones. Total XP maps to a cosmetic player title shown on the menu and the results screen.
-
-Sound comes from a local square-wave synth with a persisted mute toggle. It covers runs, per-test results, submits, the quiz, hints, overtime, unlocks, and the boot sequence. Motion covers the rest: a once-per-session skippable boot sequence synced to its jingle, 150ms screen fades, an XP count-up with a tier stamp, an OVERTIME blink, chip pop and shake, hint slide-ins, and button press states. Everything renders statically under `prefers-reduced-motion`.
-
-Beta 1 filled in the rest of the content: 62 verified problems across all eleven tracks of the planned curriculum, with 11 hard problems and a capstone closing out most tracks. Problems inside a track follow a teaching order, and solving one unlocks the next. Linked lists, trees, and graphs hand you real node objects now, and solutions that mutate their input get a fresh copy for every timed run.
-
-The progress map handles the size. Hovering a bar in the side rail lists a track's problems and marks which ones you have solved, clicking a bar jumps to that section, and a section can collapse out of the way. The top-right controls consolidated into an options menu that exports your save to a file, imports a save back, and clears local progress behind a two-click confirm. The palette picker stays one click beside the menu.
-
-For testing, a hidden admin panel plays every sound and edits progress. Type `iddqd` on any screen and an ADMIN button appears on the home screen.
+The game is local-first. Code runs in the browser through Pyodide (CPython compiled to WebAssembly), and progress is saved on your machine. There is no backend and no account system.
 
 ## Tech stack
 
@@ -29,7 +15,7 @@ For testing, a hidden admin panel plays every sound and edits progress. Type `id
 | Styling | Tailwind CSS 4 (DOS 16-color theme) |
 | Code editor | Monaco, DOS themed, no autocomplete |
 | Execution | Python via Pyodide in a Web Worker |
-| Persistence | IndexedDB / localStorage, local only |
+| Persistence | localStorage, local only |
 | Tests | Vitest |
 | Hosting | Static: GitHub Pages |
 
@@ -50,7 +36,7 @@ npm run content:build # verify problem drafts, compute outputs + anchors, write 
 
 ## Deployment
 
-The site deploys to GitHub Pages at `https://gabrielupcott.github.io/restructured/`. A push to `main` runs `.github/workflows/deploy.yml`, which installs, builds, and publishes `dist/`. The Pages source must be set to GitHub Actions in the repo settings (one time). The base path `/restructured/` is set in `vite.config.ts` to match the project-page URL.
+A push to `main` runs `.github/workflows/deploy.yml`, which installs, builds, and publishes `dist/` to GitHub Pages. The Pages source must be set to GitHub Actions in the repo settings (one time). The base path `/restructured/` in `vite.config.ts` matches the project-page URL.
 
 ## Project structure
 
